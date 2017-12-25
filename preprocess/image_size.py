@@ -3,7 +3,7 @@ import sys
 import cPickle as pickle
 from PIL import Image
 
-dirname = "../dataset/all/"
+dirname = "../datasets/image/"
 image_cnt = 0
 error_cnt = 0
 image_sizes = {};

@@ -19,6 +19,7 @@ def to_one_hot(dataY):
 
 def run_cnn(dataset_dir, para_num_epochs):   
     # common parameters
+    gpu_limit = 0.4
     cifar_dir = dataset_dir
     num_epochs = para_num_epochs
     batch_size = 64
@@ -57,8 +58,8 @@ def run_cnn(dataset_dir, para_num_epochs):
         layers=layers, n_classes=n_classes, 
         loss_func=loss_func, opt_method=opt_method,
         learning_rate=learning_rate, dropout=dropout, 
-        batch_norm = batch_norm, data_format = data_format
-    )
+        batch_norm = batch_norm, data_format = data_format, 
+        gpu_limit = gpu_limit)
     
     print('Build Convolutional Network...')
     cnn.build_model()

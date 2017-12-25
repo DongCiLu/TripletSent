@@ -12,7 +12,7 @@ class ConvNet:
     def __init__(self, name, data_shape, layers, n_classes, 
             loss_func='softmax_cross_entropy',
             opt_method='sgd', learning_rate=0.001, dropout=0.5, 
-            batch_norm=False, data_format='NCHW'):
+            batch_norm=False, data_format='NCHW', gpu_limit=0.5):
         """Constructor.
 
         :param layers: string used to build the model.
@@ -31,6 +31,7 @@ class ConvNet:
             The parameter is a list in [Height, Width, Channel] (HWC) format
         """
         self.name = name
+        self.gpu_limit = gpu_limit
         
         # structure of the network
         self.data_shape = data_shape
@@ -87,7 +88,8 @@ class ConvNet:
         #TODO: add validation interval
         assert train_y.shape[1] != 1
         with self.tf_graph.as_default():
-            with tf.Session() as sess:
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=self.gpu_limit)
+            with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
                 self._init_tf_ops(sess)
                 
                 shuff = np.array(list(zip(train_x, train_y)))
@@ -118,7 +120,8 @@ class ConvNet:
                 
     def score(self, test_x, test_y):
         with self.tf_graph.as_default():
-            with tf.Session() as sess:
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=self.gpu_limit)
+            with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
                 tf.train.Saver().restore(sess, self.model_path)
                 feed_dict = {self.input_data: test_x,
                         self.input_labels: test_y,
