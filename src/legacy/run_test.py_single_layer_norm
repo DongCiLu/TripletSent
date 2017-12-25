@@ -28,7 +28,7 @@ def run_cnn(dataset_dir, para_num_epochs):
     name = 'test_cnn'
     # data_shape = '224,224,3'
     data_shape = '32,32,3'
-    layers = 'conv2d-11-11-96-4,maxpool-3-2,conv2d-5-5-256-1,maxpool-3-2,conv2d-3-3-384-1,conv2d-3-3-384-1,conv2d-3-3-256-1,maxpool-3-2,full-4096,full-4096,softmax'
+    layers = 'conv2d-11-11-96-4-1,maxpool-3-2,conv2d-5-5-256-1-1,maxpool-3-2,conv2d-3-3-384-1-1,conv2d-3-3-384-1-1,conv2d-3-3-256-1-1,maxpool-3-2,full-4096-1,full-4096-1,softmax'
     # layers = 'conv2d-5-5-16-1,maxpool-2-2,conv2d-5-5-64-1,maxpool-2-2,full-1024,softmax'
     # n_classes = 1553
     n_classes = 10
@@ -37,9 +37,8 @@ def run_cnn(dataset_dir, para_num_epochs):
     opt_method = 'sgd'
     learning_rate = 1e-4
     dropout = 0.5
-    batch_norm = True
-    # batch_norm = False
     data_format = 'NCHW'
+
     
     # prepare data
     trX, trY, teX, teY = datasets.load_cifar10_dataset(cifar_dir, mode='supervised')
@@ -61,7 +60,7 @@ def run_cnn(dataset_dir, para_num_epochs):
         layers=layers, n_classes=n_classes, 
         loss_func=loss_func, opt_method=opt_method,
         learning_rate=learning_rate, dropout=dropout, 
-        batch_norm = batch_norm, data_format = data_format, 
+        data_format = data_format, 
         gpu_limit = gpu_limit)
     
     print('Build Convolutional Network...')

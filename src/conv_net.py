@@ -232,15 +232,15 @@ class ConvNet:
                 # Max Pooling Layer #
                 # ################# #
 
-                ksize_1d = int(node[1])
+                ksize_1d, stride = int(node[1]), int(node[2])
 
                 print('Building Max Pooling layer with size {}'.format(ksize_1d))
 
                 ksize = [1, ksize_1d, ksize_1d, 1]
-                strides = [1, ksize_1d, ksize_1d, 1]
+                strides = [1, stride, stride, 1]
                 if self.data_format == 'NCHW':
                     ksize = [1, 1, ksize_1d, ksize_1d]
-                    strides = [1, 1, ksize_1d, ksize_1d]                
+                    strides = [1, 1, stride, stride]                
                     
                 next_layer_feed = tf.nn.max_pool(
                         next_layer_feed, 
