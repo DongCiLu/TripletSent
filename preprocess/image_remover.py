@@ -21,6 +21,7 @@ for subdir, dirs, files in os.walk(dirname):
             im = Image.open(fn)
         except:
             os.remove(fn)
+            print fn
             error_cnt += 1 
             continue;
 
