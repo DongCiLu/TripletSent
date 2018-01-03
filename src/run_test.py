@@ -20,7 +20,7 @@ def to_one_hot(dataY):
 def run_cnn(dataset_dir, para_num_epochs):   
     # common parameters
     gpu_limit = 0.4
-    cifar_dir = dataset_dir
+    data_dir = dataset_dir
     num_epochs = para_num_epochs
     batch_size = 64
     
@@ -42,41 +42,42 @@ def run_cnn(dataset_dir, para_num_epochs):
     data_format = 'NCHW'
     
     # prepare data
-    trX, trY, teX, teY = datasets.load_cifar10_dataset(cifar_dir, mode='supervised')
-    val_test_split = 5000
-    trY_non_one_hot = trY
-    trY = np.array(to_one_hot(trY))
-    teY = np.array(teY)
-    teY_non_one_hot = teY[val_test_split:]
-    teY = np.array(to_one_hot(teY))
-    # first half test set is validation set
-    vlX = teX[:val_test_split]
-    vlY = teY[:val_test_split]
-    teX = teX[val_test_split:]
-    teY = teY[val_test_split:]
+    datasets.load_flickr_dataset(data_dir, num_epochs, batch_size)
+    # trX, trY, teX, teY = datasets.load_flickr_dataset(cifar_dir, mode='supervised')
+    # val_test_split = 5000
+    # trY_non_one_hot = trY
+    # trY = np.array(to_one_hot(trY))
+    # teY = np.array(teY)
+    # teY_non_one_hot = teY[val_test_split:]
+    # teY = np.array(to_one_hot(teY))
+    ##first half test set is validation set
+    # vlX = teX[:val_test_split]
+    # vlY = teY[:val_test_split]
+    # teX = teX[val_test_split:]
+    # teY = teY[val_test_split:]
     
-    # define Convolutional Network
-    cnn = conv_net.ConvNet(name=name,
-        data_shape=[int(i) for i in data_shape.split(',')],
-        layers=layers, n_classes=n_classes, 
-        loss_func=loss_func, opt_method=opt_method,
-        learning_rate=learning_rate, dropout=dropout, 
-        batch_norm = batch_norm, data_format = data_format, 
-        gpu_limit = gpu_limit)
+    # # define Convolutional Network
+    # cnn = conv_net.ConvNet(name=name,
+        # data_shape=[int(i) for i in data_shape.split(',')],
+        # layers=layers, n_classes=n_classes, 
+        # loss_func=loss_func, opt_method=opt_method,
+        # learning_rate=learning_rate, dropout=dropout, 
+        # batch_norm = batch_norm, data_format = data_format, 
+        # gpu_limit = gpu_limit)
     
-    print('Build Convolutional Network...')
-    cnn.build_model()
+    # print('Build Convolutional Network...')
+    # cnn.build_model()
     
-    print('Start Convolutional Network training...')
-    cnn.fit(num_epochs, batch_size, trX, trY, vlX, vlY)  # supervised learning
+    # print('Start Convolutional Network training...')
+    # # cnn.fit(num_epochs, batch_size, trX, trY, vlX, vlY)  # supervised learning
     
-    print('Run test set on the trained model...')
-    print(cnn.score(teX, teY))
+    # print('Run test set on the trained model...')
+    # # print(cnn.score(teX, teY))
     
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--num_epochs', type=int, default=3, required=False)
     args = arg_parser.parse_args()
-    dataset_dir = 'cifar10'
+    dataset_dir = 'temp'
     
     run_cnn(dataset_dir, args.num_epochs)
