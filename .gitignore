@@ -1,0 +1,4 @@
+
+*.pyc
+datasets/sentibank_flickr/preprocessed/train-00002-of-00002
+datasets/sentibank_flickr/preprocessed/train-00001-of-00002
