@@ -48,9 +48,9 @@ def load_flickr_dataset(train_dir, num_epochs, batch_size):
     
     train_filenames = []
     for subdir, dirs, files in os.walk(train_dir):
+        print("Collecting data from {}".format(subdir))
         for f in files:
             fn = os.path.join(subdir, f)
-            print("Collecting data from {}".format(fn))
             train_filenames.append(fn)
     
     with tf.device('/cpu:0'):
