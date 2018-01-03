@@ -78,6 +78,6 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--num_epochs', type=int, default=3, required=False)
     args = arg_parser.parse_args()
-    dataset_dir = 'temp'
+    dataset_dir = 'datasets'
     
     run_cnn(dataset_dir, args.num_epochs)
