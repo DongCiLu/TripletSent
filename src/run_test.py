@@ -44,8 +44,8 @@ def run_cnn(dataset_dir, para_num_epochs):
     tf_graph = tf.Graph()
     
     # prepare data
-    trFn = datasets.collect_dataset(data_dir)
-    vlFn = datasets.collect_dataset(data_dir)
+    trFn = datasets.collect_dataset(data_dir + "/train")
+    vlFn = datasets.collect_dataset(data_dir + "/val")
     fn_pholder, iter, image, label = datasets.input_function(
             num_epochs, batch_size, tf_graph)
     
