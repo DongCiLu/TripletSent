@@ -105,7 +105,7 @@ class ConvNet:
                             run_cnt += 1
                         except tf.errors.OutOfRangeError:
                             break
-                    # print("finished the run with {} batchs".format(run_cnt))
+                    print("finished the run with {} batchs".format(run_cnt))
                                             
                     if vlFn is not None:
                         validation_predictions = []
