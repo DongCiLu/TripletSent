@@ -26,12 +26,12 @@ def run_cnn(dataset_dir, para_num_epochs):
     
     # parameters for cnn
     name = 'test_cnn'
-    # data_shape = '224,224,3'
-    data_shape = '32,32,3'
+    data_shape = '227,227,3'
+    # data_shape = '32,32,3'
     layers = 'conv2d-11-11-96-4,maxpool-3-2,conv2d-5-5-256-1,maxpool-3-2,conv2d-3-3-384-1,conv2d-3-3-384-1,conv2d-3-3-256-1,maxpool-3-2,full-4096,full-4096,softmax'
     # layers = 'conv2d-5-5-16-1,maxpool-2-2,conv2d-5-5-64-1,maxpool-2-2,full-1024,softmax'
-    # n_classes = 1553
-    n_classes = 10
+    n_classes = 1553
+    # n_classes = 10
     loss_func = 'softmax_cross_entropy'
     # opt_method = 'adam'
     opt_method = 'sgd'
@@ -41,38 +41,32 @@ def run_cnn(dataset_dir, para_num_epochs):
     # batch_norm = False
     data_format = 'NCHW'
     
+    tf_graph = tf.Graph()
+    
     # prepare data
-    datasets.load_flickr_dataset(data_dir, num_epochs, batch_size)
-    # trX, trY, teX, teY = datasets.load_flickr_dataset(cifar_dir, mode='supervised')
-    # val_test_split = 5000
-    # trY_non_one_hot = trY
-    # trY = np.array(to_one_hot(trY))
-    # teY = np.array(teY)
-    # teY_non_one_hot = teY[val_test_split:]
-    # teY = np.array(to_one_hot(teY))
-    ##first half test set is validation set
-    # vlX = teX[:val_test_split]
-    # vlY = teY[:val_test_split]
-    # teX = teX[val_test_split:]
-    # teY = teY[val_test_split:]
+    trFn = datasets.collect_dataset(data_dir)
+    vlFn = datasets.collect_dataset(data_dir)
+    fn_pholder, iter, image, label = datasets.input_function(
+            num_epochs, batch_size, tf_graph)
     
-    # # define Convolutional Network
-    # cnn = conv_net.ConvNet(name=name,
-        # data_shape=[int(i) for i in data_shape.split(',')],
-        # layers=layers, n_classes=n_classes, 
-        # loss_func=loss_func, opt_method=opt_method,
-        # learning_rate=learning_rate, dropout=dropout, 
-        # batch_norm = batch_norm, data_format = data_format, 
-        # gpu_limit = gpu_limit)
+    # define Convolutional Network
+    cnn = conv_net.ConvNet(name=name,
+            data_shape=[int(i) for i in data_shape.split(',')],
+            layers=layers, n_classes=n_classes, 
+            loss_func=loss_func, opt_method=opt_method,
+            learning_rate=learning_rate, dropout=dropout, 
+            batch_norm=batch_norm, data_format=data_format, 
+            gpu_limit=gpu_limit, tf_graph=tf_graph)
     
-    # print('Build Convolutional Network...')
-    # cnn.build_model()
+    print('Build Convolutional Network...')
+    cnn.build_model(image, label)
     
-    # print('Start Convolutional Network training...')
-    # # cnn.fit(num_epochs, batch_size, trX, trY, vlX, vlY)  # supervised learning
+    print('Start Convolutional Network training...')
+    # cnn.fit(num_epochs, batch_size, trX, trY, vlX, vlY)
+    cnn.fit(num_epochs, batch_size, fn_pholder, iter, trFn, vlFn)
     
-    # print('Run test set on the trained model...')
-    # # print(cnn.score(teX, teY))
+    print('Run test set on the trained model...')
+    # print(cnn.score(teX, teY))
     
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()

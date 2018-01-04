@@ -7,7 +7,7 @@ def _parse_function(example_proto):
     feature_map = {
       'image/encoded': tf.FixedLenFeature([], dtype=tf.string,
                                           default_value=''),
-      'image/class/label': tf.FixedLenFeature([1], dtype=tf.int64,
+      'image/class/label': tf.FixedLenFeature([], dtype=tf.int64,
                                               default_value=-1),
       'image/class/text': tf.FixedLenFeature([], dtype=tf.string,
                                              default_value=''),
@@ -24,38 +24,44 @@ def _resize_function(image_decoded, label):
     image_decoded.set_shape([None, None, None])
     image_resized = tf.image.resize_images(image_decoded, [227, 227])
     return image_resized, label
-    
-    
-def load_flickr_dataset(train_dir, num_epochs, batch_size):
-    """Load the flickr dataset.
 
-    :param dataset_dir: path to the dataset directory
-
-    :return: train, test data
-    """   
-    # remember to make it on CPU
-    filenames = tf.placeholder(tf.string, shape=[None])
-    dataset = tf.contrib.data.TFRecordDataset(filenames)
-    dataset = dataset.map(_parse_function)
-    dataset = dataset.map(_decode_function)
-    dataset = dataset.map(_resize_function)
-    dataset = dataset.shuffle(buffer_size=10000)
-    dataset = dataset.repeat(num_epochs)
-    dataset = dataset.batch(batch_size)
-    
-    iterator = dataset.make_initializable_iterator()
-    next_element = iterator.get_next()
-    
-    train_filenames = []
-    for subdir, dirs, files in os.walk(train_dir):
+def collect_dataset(data_dir):
+    # collecting training filenames
+    filenames = []
+    for subdir, dirs, files in os.walk(data_dir):
         print("Collecting data from {}".format(subdir))
         for f in files:
             fn = os.path.join(subdir, f)
-            train_filenames.append(fn)
-    
-    with tf.device('/cpu:0'):
-        sess = tf.Session()
-        sess.run(iterator.initializer, 
-                feed_dict={filenames: train_filenames})
+            filenames.append(fn)
             
-        print(sess.run(next_element))
+    return filenames
+    
+def input_function(num_epochs, batch_size, tf_graph):
+    """dataset graph.
+
+    :param dataset_dir: path to the dataset directory
+
+    :return: iterator initializer hook
+    """       
+    with tf_graph.as_default():
+        # image processing routine
+        filenames = tf.placeholder(tf.string, shape=[None])
+        dataset = tf.contrib.data.TFRecordDataset(filenames)
+        dataset = dataset.map(_parse_function)
+        dataset = dataset.map(_decode_function)
+        dataset = dataset.map(_resize_function)
+        dataset = dataset.shuffle(buffer_size=10000)
+        # dataset = dataset.repeat(num_epochs) # move it to train loop
+        dataset = dataset.batch(batch_size)
+        
+        iterator = dataset.make_initializable_iterator()
+        # iterator = dataset.make_one_shot_iterator()
+        next_image, next_label = iterator.get_next()
+        
+        # sess = tf.Session()
+        # sess.run(iterator.initializer, 
+        #         feed_dict={filenames: train_filenames}) 
+        # image_1, label_1 = sess.run([next_image, next_label])
+       
+        return filenames, iterator, next_image, next_label
+        

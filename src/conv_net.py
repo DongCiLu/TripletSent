@@ -12,7 +12,8 @@ class ConvNet:
     def __init__(self, name, data_shape, layers, n_classes, 
             loss_func='softmax_cross_entropy',
             opt_method='sgd', learning_rate=0.001, dropout=0.5, 
-            batch_norm=False, data_format='NCHW', gpu_limit=0.5):
+            batch_norm=False, data_format='NCHW', 
+            gpu_limit=0.5, tf_graph=tf.Graph()):
         """Constructor.
 
         :param layers: string used to build the model.
@@ -48,7 +49,7 @@ class ConvNet:
         self.batch_norm = batch_norm
         self.data_format = data_format
         
-        self.tf_graph = tf.Graph()
+        self.tf_graph = tf_graph
         
         # parameteres of the network
         self.W_vars = None
@@ -71,10 +72,10 @@ class ConvNet:
         self.run_dir = None
         self.model_path = None
 
-    def build_model(self):
+    def build_model(self, input_x, input_y):
         with self.tf_graph.as_default():
             # build the graph structure
-            self._create_placeholders()
+            self._create_placeholders(input_x, input_y)
             self._create_layers()
             # build the train and evaluation loops
             self._define_cost()
@@ -84,37 +85,46 @@ class ConvNet:
             self._setup_directories()
         
     def fit(self, num_epochs, batch_size, 
-            train_x, train_y, val_x = None, val_y = None):
+            fn_pholder, iter, trFn, vlFn = None):
         #TODO: add validation interval
-        assert train_y.shape[1] != 1
         with self.tf_graph.as_default():
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=self.gpu_limit)
             with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
                 self._init_tf_ops(sess)
                 
-                shuff = np.array(list(zip(train_x, train_y)))
-                
                 pbar = tqdm(range(num_epochs))
                 for epoch in pbar:
-                    np.random.shuffle(list(shuff))
-                    batches = [_ for _ in self.get_batches(
-                        shuff, batch_size)]
-                    for batch in batches:
-                        x_batch, y_batch = zip(*batch)
-                        sess.run(self.train_step,
-                                feed_dict = {self.input_data: x_batch,
-                                        self.input_labels: y_batch,
-                                        self.keep_prob: self.dropout,
-                                        self.is_training: True})
-                                        
-                    if val_x is not None:
-                        result = sess.run([self.merged_summary, self.accuracy],
-                                feed_dict = {self.input_data: val_x,
-                                        self.input_labels: val_y,
-                                        self.keep_prob: 1,
-                                        self.is_training: False})
-                        self.summary_writer.add_summary(result[0], epoch)
-                        pbar.set_description("Accuracy: {}".format(result[1]))
+                    sess.run(iter.initializer, 
+                            feed_dict={fn_pholder: trFn})
+                    run_cnt = 0
+                    while True:
+                        try:
+                            sess.run(self.train_step,
+                                    feed_dict = {self.keep_prob: self.dropout,
+                                            self.is_training: True})
+                            run_cnt += 1
+                        except tf.errors.OutOfRangeError:
+                            break
+                    # print("finished the run with {} batchs".format(run_cnt))
+                                            
+                    if vlFn is not None:
+                        validation_predictions = []
+                        sess.run(iter.initializer, 
+                                feed_dict={fn_pholder: vlFn})
+                        while True:
+                            try:
+                                result = sess.run([self.merged_summary, 
+                                        self.accuracy],
+                                        feed_dict = {self.keep_prob: 1,
+                                                self.is_training: False})
+                                validation_predictions = np.append(
+                                        validation_predictions, result[1])
+                            except:
+                                break
+                        accuracy = np.mean(validation_predictions)
+                        # self.summary_writer.add_summary(result[0], epoch)
+                        # print("validation summary: {}".format(accuracy))
+                        pbar.set_description("Accuracy: {}".format(accuracy))
                 
                 tf.train.Saver().save(sess, self.model_path)
                 
@@ -129,11 +139,13 @@ class ConvNet:
                         self.is_training: False}
                 return self.accuracy.eval(feed_dict)
         
-    def _create_placeholders(self):
-        self.input_data = tf.placeholder(
-                tf.float32, [None, self.n_features], name='x-input') 
-        self.input_labels = tf.placeholder(
-                tf.float32, [None, self.n_classes], name='y-input')
+    def _create_placeholders(self, input_x, input_y):
+        # self.input_data = tf.placeholder(
+                # tf.float32, [None, self.n_features], name='x-input') 
+        # self.input_labels = tf.placeholder(
+                # tf.float32, [None, self.n_classes], name='y-input')
+        self.input_data = input_x
+        self.input_labels = tf.one_hot(input_y, self.n_classes)
         self.keep_prob = tf.placeholder(
                 tf.float32, name='keep-probs')
         self.is_training = tf.placeholder(
