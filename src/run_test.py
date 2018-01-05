@@ -17,9 +17,9 @@ def to_one_hot(dataY):
         onehot[i][j] = 1
     return onehot
 
-def run_cnn(dataset_dir, para_num_epochs):   
+def run_cnn(dataset_dir, para_num_epochs, para_gpu_limit):   
     # common parameters
-    gpu_limit = 0.4
+    gpu_limit = para_gpu_limit
     data_dir = dataset_dir
     num_epochs = para_num_epochs
     batch_size = 64
@@ -33,9 +33,8 @@ def run_cnn(dataset_dir, para_num_epochs):
     n_classes = 1553
     # n_classes = 10
     loss_func = 'softmax_cross_entropy'
-    # opt_method = 'adam'
-    opt_method = 'sgd'
-    learning_rate = 1e-4
+    opt_method = 'momentum'
+    learning_rate = 1e-3
     dropout = 0.5
     batch_norm = True
     # batch_norm = False
@@ -71,7 +70,8 @@ def run_cnn(dataset_dir, para_num_epochs):
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('--num_epochs', type=int, default=3, required=False)
+    arg_parser.add_argument('--gpu_limit', type=float, default=0.4, required=False)
     args = arg_parser.parse_args()
     dataset_dir = 'datasets/sentibank_flickr/preprocessed'
     
-    run_cnn(dataset_dir, args.num_epochs)
+    run_cnn(dataset_dir, args.num_epochs, args.gpu_limit)

@@ -62,6 +62,8 @@ class ConvNet:
         self.optimizer = None
         self.train_step = None
         self.accuracy = None
+        self.accuracy_5 = None
+        self.accuracy_10 = None
         
         self.merged_summary = None
         self.summary_writer = None
@@ -109,22 +111,32 @@ class ConvNet:
                                             
                     if vlFn is not None:
                         validation_predictions = []
+                        validation_predictions_5 = []
+                        validation_predictions_10 = []
                         sess.run(iter.initializer, 
                                 feed_dict={fn_pholder: vlFn})
                         while True:
                             try:
-                                result = sess.run([self.merged_summary, 
-                                        self.accuracy],
+                                result = sess.run([self.merged_summary, self.accuracy, 
+                                        self.accuracy_5, self.accuracy_10],
                                         feed_dict = {self.keep_prob: 1,
                                                 self.is_training: False})
                                 validation_predictions = np.append(
                                         validation_predictions, result[1])
-                            except:
+                                validation_predictions_5 = np.append(
+                                        validation_predictions, result[2])
+                                validation_predictions_10 = np.append(
+                                        validation_predictions, result[3])
+                            except tf.errors.OutOfRangeError:
                                 break
                         accuracy = np.mean(validation_predictions)
+                        accuracy_5 = np.mean(validation_predictions_5)
+                        accuracy_10 = np.mean(validation_predictions_10)
                         # self.summary_writer.add_summary(result[0], epoch)
-                        # print("validation summary: {}".format(accuracy))
-                        pbar.set_description("Accuracy: {}".format(accuracy))
+                        print("validation accuracy: {}".format(accuracy))
+                        print("validation accuracy-5: {}".format(accuracy_5))
+                        print("validation accuracy-10: {}".format(accuracy_10))
+                        # pbar.set_description("Accuracy: {}".format(accuracy))
                 
                 tf.train.Saver().save(sess, self.model_path)
                 
@@ -371,6 +383,12 @@ class ConvNet:
         correct_pred = tf.equal(mod_pred, tf.argmax(self.input_labels, 1))
         self.accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
         tf.summary.scalar('accuracy', self.accuracy)
+        correct_pred_5 = tf.nn.in_top_k(self.mod_y, tf.argmax(self.input_labels, 1), 5)
+        self.accuracy_5 = tf.reduce_mean(tf.cast(correct_pred_5, tf.float32))
+        tf.summary.scalar('accuracy-5', self.accuracy_5)
+        correct_pred_10 = tf.nn.in_top_k(self.mod_y, tf.argmax(self.input_labels, 1), 10)
+        self.accuracy_10 = tf.reduce_mean(tf.cast(correct_pred_10, tf.float32))
+        tf.summary.scalar('accuracy-10', self.accuracy_10)
         
     def _setup_directories(self):
         home_dir = os.path.join(os.path.expanduser("~"), '.zluconvnet')
