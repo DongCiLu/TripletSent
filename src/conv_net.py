@@ -132,7 +132,7 @@ class ConvNet:
                         accuracy = np.mean(validation_predictions)
                         accuracy_5 = np.mean(validation_predictions_5)
                         accuracy_10 = np.mean(validation_predictions_10)
-                        # self.summary_writer.add_summary(result[0], epoch)
+                        self.summary_writer.add_summary(result[0], epoch)
                         print("validation accuracy: {}".format(accuracy))
                         print("validation accuracy-5: {}".format(accuracy_5))
                         print("validation accuracy-10: {}".format(accuracy_10))
