@@ -33,7 +33,7 @@ def run_cnn(dataset_dir, para_num_epochs, para_gpu_limit):
     n_classes = 1553
     # n_classes = 10
     loss_func = 'softmax_cross_entropy'
-    opt_method = 'momentum'
+    opt_method = 'adam'
     learning_rate = 1e-3
     dropout = 0.5
     batch_norm = True
