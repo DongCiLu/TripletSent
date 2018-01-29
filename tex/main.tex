@@ -10,6 +10,7 @@
 \usepackage{cite}
 \usepackage[pdftex]{graphicx}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{algorithm2e}
 \usepackage{subfigure}
 \usepackage{threeparttable}
@@ -25,7 +26,7 @@
 % not capitalized unless they are the first or last word of the title.
 % Linebreaks \\ can be used within to get better formatting as desired.
 % Do not put math or special symbols in the title.
-\title{Image Sentiment Analysis\\ with Convolutional Networks}
+\title{CNN for Image Sentiment Analysis\\ with Triplet Loss}
 
 
 % author names and affiliations
@@ -44,7 +45,7 @@ Email: \{zlu12, yfeng14\}@vols.utk.edu}
 % As a general rule, do not put math, special symbols or citations
 % in the abstract
 \begin{abstract}
-Understanding the underlying attitude of people towards a given image automatically is important for many applications. The rapid growth of social media provides new opportunities and challenges to design image sentiment inference systems. Due to the weak relation between low-level visual features and sentiment, recent work focus on constructing mid-level semantic representation that can both be easily detected from the input images and be mapped to the sentiment class. However, ... We propose a novel convolution network based end to end system that can automatically generate the most suitable mid-level features. We show the effectiveness of our approaches by detecting sentiment of image tweets and show significant improvement against baseline approaches.
+Understanding the underlying attitude of people towards a given image automatically is important for many applications. The rapid growth of social media provides new opportunities and challenges to design image sentiment inference systems. Due to the weak relation between low-level visual features and sentiment, recent work focus on constructing mid-level semantic representation that can both be easily detected from the input images and be mapped to the sentiment class. However, although current convolutional neural networks are good at identifying objects, it is not as effective when applied for mid-level semantic representations with adjective parts. To overcome this challenge, we adopt a variant of convolutional neural networks with triplet loss to perform end-to-end learning that can automatically generate the most suitable mid-level features. We show the effectiveness of our approaches by detecting both mid-level representations and predicting sentiment of various image datasets and show significant improvement against the baseline approaches.
 \end{abstract}
 
 \IEEEpeerreviewmaketitle
@@ -60,6 +61,8 @@ Understanding the underlying attitude of people towards a given image automatica
 
 
 %The authors would like to thank...
+
+\clearpage
 
 \bibliographystyle{abbrv}
 \bibliography{reference}
