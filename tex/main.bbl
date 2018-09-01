@@ -39,12 +39,29 @@ K.~He, X.~Zhang, S.~Ren, and J.~Sun.
 \newblock In {\em Proceedings of the IEEE conference on computer vision and
   pattern recognition}, pages 770--778, 2016.
 
+\bibitem{hermans2017defense}
+A.~Hermans, L.~Beyer, and B.~Leibe.
+\newblock In defense of the triplet loss for person re-identification.
+\newblock {\em arXiv preprint arXiv:1703.07737}, 2017.
+
 \bibitem{jou2015visual}
 B.~Jou, T.~Chen, N.~Pappas, M.~Redi, M.~Topkara, and S.-F. Chang.
 \newblock Visual affect around the world: A large-scale multilingual visual
   sentiment ontology.
 \newblock In {\em Proceedings of the 23rd ACM international conference on
   Multimedia}, pages 159--168. ACM, 2015.
+
+\bibitem{kingma2014adam}
+D.~Kingma and J.~Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem{kramer2014experimental}
+A.~D. Kramer, J.~E. Guillory, and J.~T. Hancock.
+\newblock Experimental evidence of massive-scale emotional contagion through
+  social networks.
+\newblock {\em Proceedings of the National Academy of Sciences},
+  111(24):8788--8790, 2014.
 
 \bibitem{krizhevsky2012imagenet}
 A.~Krizhevsky, I.~Sutskever, and G.~E. Hinton.
