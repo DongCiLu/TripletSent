@@ -9,6 +9,8 @@ threshold = 100
 high_count = 0
 low_count = 0
 lowest_nf = 1000
+low_nf = 0
+total_nf = 0
 ANP_count = 0
 adj_table = {}
 noun_table = {}
@@ -33,6 +35,7 @@ for subdir, dirs, files in os.walk(dataset_dir):
     # Get stat of number of images in each ANP
     nf = len([f for f in os.listdir(subdir) 
         if os.path.isfile(os.path.join(subdir, f))])
+    total_nf += nf
 
     if nf < lowest_nf:
         lowest_nf = nf
@@ -40,11 +43,14 @@ for subdir, dirs, files in os.walk(dataset_dir):
     if nf >= threshold:
         high_count += 1
     else:
+        low_nf += nf
         low_count += 1
-        # move(subdir, dump_dir)
+        move(subdir, dump_dir)
 
 # Print stats
 print("{} folders with more than {} files and {} folders with less than {} files.".format(high_count, threshold, low_count, threshold))
+
+print("{} files are removed from {} files.".format(low_nf, total_nf))
 
 print("The smallest folder has {} files.".format(lowest_nf))
 
