@@ -23,7 +23,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 # from slim.datasets import dataset_factory as datasets
-import celegans
+import ts
 
 slim = tf.contrib.slim
 
@@ -37,8 +37,8 @@ def data_augmentation(image):
 
     return image
 
-def provide_data(split_name, batch_size, dataset_dir, num_readers=1,
-                 num_threads=1, mode=""):
+def provide_data(split_name, batch_size, 
+        dataset_dir, num_readers=1, num_threads=1):
     """Provides batches of MNIST digits.
   
     Args:
@@ -57,38 +57,27 @@ def provide_data(split_name, batch_size, dataset_dir, num_readers=1,
     Raises:
       ValueError: If `split_name` is not either 'train' or 'test'.
     """
-    dataset = celegans.get_split(split_name, 
-            dataset_dir=dataset_dir, mode=mode)
+    dataset = ts.get_split(split_name, dataset_dir)
     provider = slim.dataset_data_provider.DatasetDataProvider(
         dataset,
         num_readers=num_readers,
         common_queue_capacity=2 * batch_size,
         common_queue_min=batch_size,
-        shuffle=(split_name == 'train' or split_name == 'unlabeled'))
-    [image, label, filename] = provider.get(['image', 'label', 'filename'])
+        shuffle=(split_name == 'train'))
+    [image, label, filename] = \
+        provider.get(['image', 'label', 'filename'])
   
     # Resize image to an acceptable size
-    old_size = image.shape
-    base_size = 128
-    if mode == "multiple":
-      width = base_size * 2
-      height = base_size
-    elif mode == "tiny" or mode == "tinygan":
-      width = 32
-      height = 32
-    else:
-      width = base_size
-      height = base_size
-    if old_size[0] != height or old_size[1] != width:
-      image = tf.image.resize_images(image, [height, width])
-      print ("resize image from {} to {}".format(old_size, image.shape))
+    # image = tf.image.resize_images(image, [height, width])
   
     # Data augmentation.
-    if (mode == "classification" or mode == "tiny") and split_name == "train":
+    '''
+    if split_name == "train":
         print("enable data augmentation")
         image = tf.to_float(image) / 255.0
         image = data_augmentation(image)
         image = tf.cast(image * 255.0, tf.uint8)
+    '''
   
     # Change the images to [-1.0, 1.0).
     image = (tf.to_float(image) - 128.0) / 128.0

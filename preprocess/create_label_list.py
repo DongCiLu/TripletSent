@@ -1,6 +1,6 @@
 import os
 
-dataset_dir = "../datasets/sentibank_flickr/image"
+dataset_dir = "../datasets/sentibank_flickr/preprocessed"
 outlist = open("label_list.txt", 'w')
 
 for subdir, dirs, files in os.walk(dataset_dir):
