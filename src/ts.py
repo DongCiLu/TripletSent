@@ -23,6 +23,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 import tensorflow as tf
 
 from datasets import dataset_utils
@@ -63,6 +64,8 @@ def get_split(split_name, dataset_dir,
       ValueError: if `split_name` is not a valid train/test split.
     """
 
+    print("****Get split name: {}****".format(split_name))
+    sys.stdout.flush()
     if split_name not in _SPLITS_TO_SIZES:
         raise ValueError('split name %s was not recognized.' % split_name)
 

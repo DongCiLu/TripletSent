@@ -21,7 +21,9 @@ from __future__ import print_function
 import functools
 
 import os
+import sys
 import math
+import pickle
 from PIL import Image
 from PIL import ImageDraw
 import matplotlib as mpl
@@ -37,6 +39,7 @@ import ts
 import data_provider
 
 _NN_BASE_NUM_FILTERS = 1024
+_NN_NUM_FC_HIDDEN = 2048
 _NUM_CNN_LAYERS = 5
 
 flags = tf.flags
@@ -52,14 +55,11 @@ flags.DEFINE_string('dataset_dir', None, 'Location of data.')
 flags.DEFINE_string('mode', 'training', 
         'All modes: [training inference visualization].')
 
-flags.DEFINE_float('lr', 1e-5, 
+flags.DEFINE_float('lr', 1e-4, 
         'Learning rate for the network.')
 
-flags.DEFINE_integer('max_number_of_steps', 10000,
-        'The maximum number of gradient steps.')
-
-flags.DEFINE_integer('max_eval_steps', 20,
-        'The maximum number of gradient steps.')
+flags.DEFINE_integer('num_epochs', 1,
+        'The number of training epochs.')
 
 flags.DEFINE_string('data_format', 'NCHW',
         'Data format, possible value: NCHW or NHWC.')
@@ -67,8 +67,8 @@ flags.DEFINE_string('data_format', 'NCHW',
 flags.DEFINE_integer('num_predictions', 1,
         'number of images to predict labels.')
 
-flags.DEFINE_string('prediction_out', 'prediction_results',
-        'directories to save predicted images.')
+flags.DEFINE_string('prediction_out', 'prediction_results.txt',
+        'file to store prediction results.')
 
 flags.DEFINE_string('visualization_in', 'visualization_input',
         'directories for images to visualize.')
@@ -79,35 +79,34 @@ flags.DEFINE_string('visualization_out', 'visualization_results',
 FLAGS = flags.FLAGS
 
 def input_fn(split_name):
-    images, labels, filenames, _ = data_provider.provide_data(
-            split_name, FLAGS.batch_size, FLAGS.dataset_dir)
-    features = {'images': images, 'filenames': filenames}
-    return (features, labels)
-
-_leaky_relu = lambda x: tf.nn.leaky_relu(x, alpha=0.01)
-
-def cnn_model(features, labels, mode):
-    images = features['images']
-    filenames = features['filenames']
-    # format data
-    if FLAGS.data_format == 'NCHW':
-        print("Converting data format to channels first (NCHW)")
-        images = tf.transpose(images, [0, 3, 1, 2])
-    # setup batch normalization
-    if mode == tf.estimator.ModeKeys.TRAIN:
-        norm_params={'is_training':True, 
-                'data_format': FLAGS.data_format}
+    if split_name == 'predict':
+        batch_size = 1
     else:
-        norm_params={'is_training':False,
-                'data_format': FLAGS.data_format,
-                'updates_collections': None}
-    # create the network
+        batch_size = FLAGS.batch_size
+
+    images, onehot_labels, filenames, axillary_labels, _ = \
+            data_provider.provide_data(split_name, 
+            batch_size, FLAGS.dataset_dir)
+
+    print("Tensor formatting check: ")
+    print("image shape:{}".format(images.shape))
+    print("onehot label shape:{}".format(onehot_labels.shape))
+    print("filename shape:{}".format(filenames.shape))
+    print("axillary label shape:{}".format(axillary_labels.shape))
+    sys.stdout.flush()
+
+    features = {'images': images, 'filenames': filenames,
+                'axillary_labels': axillary_labels}
+    return features, onehot_labels 
+
+# _leaky_relu = lambda x: tf.nn.leaky_relu(x, alpha=0.01)
+
+def deep_conv_net(images, norm_params, mode):
     with tf.contrib.framework.arg_scope(
             [layers.conv2d, layers.fully_connected],
-            activation_fn=_leaky_relu,
+            activation_fn=tf.nn.leaky_relu,
             normalizer_fn=layers.batch_norm,
             normalizer_params=norm_params):
-        # activation_fn=tf.nn.leaky_relu, normalizer_fn=None):
         conv = []
         n_filters = int(_NN_BASE_NUM_FILTERS / (2 ** _NUM_CNN_LAYERS))
         kernel_size = 4
@@ -121,13 +120,86 @@ def cnn_model(features, labels, mode):
             output_lastlayer = conv[-1]
             print("conv layers output size: {}".format(conv[-1].shape))
         flat = layers.flatten(conv[-1])
-        fc1 = layers.fully_connected(flat, _NN_BASE_NUM_FILTERS)
+        fc1 = layers.fully_connected(flat, _NN_NUM_FC_HIDDEN)
         print("fc layers output size: {}".format(fc1.shape))
         fc1_dropout = layers.dropout(fc1, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
         logits = layers.fully_connected(
                 fc1_dropout, ts._NUM_CLASSES, activation_fn=None)
         print("fc layers output size: {}".format(logits.shape))
+        sys.stdout.flush()
+    return logits
+
+def alex_net(images, norm_params, mode):
+    with tf.contrib.framework.arg_scope(
+            [layers.conv2d, layers.fully_connected],
+            activation_fn=tf.nn.leaky_relu,
+            normalizer_fn=layers.batch_norm,
+            normalizer_params=norm_params):
+        conv1 = layers.conv2d(images, 96, 11, 2, 
+                data_format=FLAGS.data_format)
+        print("conv layers output size: {}".format(conv1.shape))
+        pool1 = layers.max_pool2d(conv1, 3, 2,
+                data_format=FLAGS.data_format)
+        print("pooling layers output size: {}".format(pool1.shape))
+        conv2 = layers.conv2d(pool1, 256, 5, 1, 
+                data_format=FLAGS.data_format)
+        print("conv layers output size: {}".format(conv2.shape))
+        pool2 = layers.max_pool2d(conv2, 3, 2,
+                data_format=FLAGS.data_format)
+        print("pooling layers output size: {}".format(pool2.shape))
+        conv3 = layers.conv2d(pool2, 384, 3, 1, 
+                data_format=FLAGS.data_format)
+        print("conv layers output size: {}".format(conv3.shape))
+        conv4 = layers.conv2d(conv3, 384, 3, 1, 
+                data_format=FLAGS.data_format)
+        print("conv layers output size: {}".format(conv4.shape))
+        conv5 = layers.conv2d(conv4, 256, 3, 1, 
+                data_format=FLAGS.data_format)
+        print("conv layers output size: {}".format(conv5.shape))
+        pool3 = layers.max_pool2d(conv5, 3, 2,
+                data_format=FLAGS.data_format)
+        print("pooling layers output size: {}".format(pool3.shape))
+
+        flat = layers.flatten(pool3)
+        print("after flat layers output size: {}".format(flat.shape))
+        fc1 = layers.fully_connected(flat, 4096)
+        print("fc layers output size: {}".format(fc1.shape))
+        fc1_dropout = layers.dropout(fc1, 
+                is_training=(mode==tf.estimator.ModeKeys.TRAIN))
+        fc2 = layers.fully_connected(fc1, 4096)
+        print("fc layers output size: {}".format(fc2.shape))
+        fc2_dropout = layers.dropout(fc2, 
+                is_training=(mode==tf.estimator.ModeKeys.TRAIN))
+        logits = layers.fully_connected(
+                fc2_dropout, ts._NUM_CLASSES, activation_fn=None)
+        print("fc layers output size: {}".format(logits.shape))
+        sys.stdout.flush()
+    return logits
+
+def cnn_model(features, labels, mode):
+    images = features['images']
+    filenames = features['filenames']
+    onehot_labels = labels
+    axillary_labels = features['axillary_labels']
+
+    # Format data
+    if FLAGS.data_format == 'NCHW':
+        print("Converting data format to channels first (NCHW)")
+        images = tf.transpose(images, [0, 3, 1, 2])
+
+    # Setup batch normalization
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        norm_params={'is_training':True, 
+                'data_format': FLAGS.data_format}
+    else:
+        norm_params={'is_training':False,
+                'data_format': FLAGS.data_format,
+                'updates_collections': None}
+
+    # Create the network
+    # logits = deep_conv_net(images, norm_params, mode) 
+    logits = alex_net(images, norm_params, mode) 
 
     # Inference
     predicted_classes = tf.argmax(logits, 1)
@@ -135,14 +207,15 @@ def cnn_model(features, labels, mode):
         return tf.estimator.EstimatorSpec(
                 mode,
                 predictions={
-                    'class': predicted_classes,
+                    'pred_class': predicted_classes,
+                    'gt_class': axillary_labels,
                     'prob': tf.nn.softmax(logits),
                 })
 
     # Training 
-    groundtruth_classes = tf.argmax(labels, 1)
+    groundtruth_classes = tf.argmax(onehot_labels, 1)
     loss = tf.losses.softmax_cross_entropy(
-            onehot_labels=labels, logits=logits)
+            onehot_labels=onehot_labels, logits=logits)
     if mode == tf.estimator.ModeKeys.TRAIN:
         optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.lr)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -153,43 +226,89 @@ def cnn_model(features, labels, mode):
                     mode, loss=loss, train_op=train_op)
 
     # Testing
+    # top_5 = tf.metrics.precision_at_top_k(
+            # labels=groundtruth_classes, 
+            # predictions=predicted_classes,
+            # k = 5)
+    # top_10 = tf.metrics.precision_at_top_k(
+            # labels=groundtruth_classes, 
+            # predictions=predicted_classes,
+            # k = 10)
     eval_metric_ops = {
             'eval/accuracy': tf.metrics.accuracy(
                 labels=groundtruth_classes, 
-                predictions=predicted_classes)
+                predictions=predicted_classes),
+            # 'eval/accuracy_top5': top_5,
+            # 'eval/accuracy_top10': top_10,
             }
     return tf.estimator.EstimatorSpec(
             mode, loss=loss, eval_metric_ops=eval_metric_ops)
+
+def load_noun_adj_list():
+    pf = open('preprocess/noun_adj_list.p', 'rb')
+    noun_list = pickle.load(pf)
+    adj_list = pickle.load(pf)
+    pf.close()
+    return noun_list, adj_list
+
+def customized_evaluation(
+        predictions, noun_list, adj_list): 
+    accuracy = {'ANP': 0, 'noun': 0, 'adj': 0}
+    for pred, _ in zip(predictions, range(FLAGS.num_predictions)):
+        pred_ANP = pred['pred_class']
+        gt_ANP = pred['gt_class']
+        correctness = {'ANP': pred_ANP == gt_ANP, 
+                       'noun': pred_ANP in noun_list[gt_ANP],
+                       'adj': pred_ANP in adj_list[gt_ANP]}
+        for key in correctness:
+            if correctness[key]:
+                accuracy[key] += 1
+    for key in accuracy:
+        accuracy[key] = float(accuracy[key]) / FLAGS.num_predictions
+    print("Final accuracy after {} experiments is:\n{}".format(
+        FLAGS.num_predictions, accuracy))
 
 def main(_):
     if not tf.gfile.Exists(FLAGS.train_log_dir):
         tf.gfile.MakeDirs(FLAGS.train_log_dir)
 
+    epoch_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
+            FLAGS.batch_size)))
+    test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
+            FLAGS.batch_size)))
+
+    my_checkpointing_config = tf.estimator.RunConfig(
+            save_checkpoints_steps = epoch_size)
+
     classifier = tf.estimator.Estimator(
             model_fn=cnn_model, 
-            model_dir=FLAGS.train_log_dir)
+            model_dir=FLAGS.train_log_dir,
+            config=my_checkpointing_config)
 
     if FLAGS.mode == 'training':
-        split_name = 'train'
         train_spec = tf.estimator.TrainSpec(input_fn=
-                lambda: input_fn(split_name),
-                max_steps=FLAGS.max_number_of_steps)
-        split_name = 'test'
+                lambda: input_fn('train'),
+                max_steps=(FLAGS.num_epochs * epoch_size))
         eval_spec = tf.estimator.EvalSpec(input_fn=
-                lambda: input_fn(split_name),
+                lambda: input_fn('test'),
+                steps=test_size,
                 throttle_secs=5, start_delay_secs=5)
         tf.estimator.train_and_evaluate(
                 classifier, train_spec, eval_spec)
 
-    elif FLAGS.mode == 'inference':
-        if not tf.gfile.Exists(FLAGS.prediction_out):
-            tf.gfile.MakeDirs(FLAGS.prediction_out)
+    elif FLAGS.mode == 'custom_training':
+        # This is a fake inference model, as we only use the predict
+        # function of estimator but not realy do prediction.
+        # We use this as a customized evaluation
+        noun_list, adj_list = load_noun_adj_list()
 
-        split_name = 'predict'
-        predictions = classifier.predict(input_fn=
-                lambda:input_fn(split_name))
-        for pred, _ in zip(predictions, range(FLAGS.num_predictions)):
-            print(pred['class'])
+        classifier.train(
+                input_fn=lambda: input_fn('train'),
+                steps=(FLAGS.num_epochs * epoch_size))
+        predictions = classifier.predict(
+                input_fn=lambda:input_fn('predict'))
+        customized_evaluation(
+                predictions, noun_list, adj_list)
 
     elif FLAGS.mode == 'visualization':
         if not tf.gfile.Exists('{}'.format(FLAGS.visualization_out)):

@@ -30,19 +30,19 @@ import data_provider
 class DataProviderTest(tf.test.TestCase):
     def test_celegans_data_reading(self):
         split_name = 'train'
-        batch_size = 1
+        batch_size = 10
         dataset_dir = "datasets/sentibank_flickr/regular/tfrecord"
-        images, labels, filenames, num_samples = \
+        images, oh_labels, filenames, ax_labels, num_samples = \
                 data_provider.provide_data(
                 split_name, batch_size, dataset_dir)
 
         with self.test_session() as sess:
             with tf.contrib.slim.queues.QueueRunners(sess):
-                images, labels, filenames = \
-                        sess.run([images, labels, filenames])
+                images, oh_labels, filenames, ax_labels = \
+                        sess.run([images, oh_labels, 
+                                  filenames, ax_labels])
             for image, cnt in zip(images, range(len(images))):
-                print(image, filenames)
-                break
+                print(image)
 
 if __name__ == '__main__':
     tf.test.main()

@@ -38,9 +38,8 @@ set -e
 
 # define run mode
 run_mode=$1
-if ! [[ "$run_mode" =~ ^(test|training|inference|visualization) ]]; 
-then
-    echo "'run_mode' must be one of: 'test', 'training', 'inference', 'visualization'."
+if ! [[ "$run_mode" =~ ^(test|training|custom_training|visualization) ]]; then
+    echo "'run_mode' must be one of: 'test', 'training', 'custom_training', 'visualization'."
     exit
 fi
 
@@ -51,9 +50,9 @@ if [[ "$version" == "" ]]; then
 fi
 
 # define number of steps to run the experiment
-NUM_STEPS=$3
-if [[ "$NUM_STEPS" == "" ]]; then
-    NUM_STEPS=10000
+NUM_EPOCHS=$3
+if [[ "$NUM_EPOCHS" == "" ]]; then
+    NUM_EPOCHS=1
 fi
 
 # Location of the git repository.
@@ -63,10 +62,10 @@ git_repo="/home/zlu12/Tensorflow-models"
 src_dir="/home/zlu12/TripletSent/src"
 
 # Base name for where the checkpoint and logs will be saved to.
-TRAIN_DIR=ts-model/${version}
+TRAIN_DIR=ts-models/${version}
 
 # Base name for where the evaluation images will be saved to.
-EVAL_DIR=ts-model/eval/${version}
+EVAL_DIR=ts-models/eval/${version}
 
 # Where the dataset is saved to.
 DATASET_DIR=datasets/sentibank_flickr/regular/tfrecord
@@ -81,7 +80,7 @@ Banner () {
     echo -e "${green}${text}${nc}"
 }
 
-Banner "Starting ${run_mode} for ${NUM_STEPS} steps..."
+Banner "Starting ${run_mode} for ${NUM_EPOCHS} epochs..."
 
 # Run temporary tests.
 if [[ "$run_mode" == "test" ]]; then
@@ -94,21 +93,23 @@ if [[ "$run_mode" == "training" ]]; then
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
         --mode="training" \
-        --max_number_of_steps=${NUM_STEPS} \
+        --num_epochs=${NUM_EPOCHS} \
         --alsologtostderr
 fi
 
-# Run inference.
-if [[ "$run_mode" == "inference" ]]; then
-    NUM_PREDICTION=11250
-    BATCH_SIZE=1
-    python "${src_dir}/train.py" \
-        --train_log_dir=${TRAIN_DIR} \
-        --dataset_dir=${DATASET_DIR} \
-        --mode="inference" \
-        --num_predictions=${NUM_PREDICTION} \
-        --batch_size=${BATCH_SIZE} \
-        --alsologtostderr
+# Run customized training.
+if [[ "$run_mode" == "custom_training" ]]; then
+    NUM_PREDICTIONS=121738
+    for (( i=1; i<=$NUM_EPOCHS; i++ ))
+    do
+        python "${src_dir}/train.py" \
+            --train_log_dir=${TRAIN_DIR} \
+            --dataset_dir=${DATASET_DIR} \
+            --mode="custom_training" \
+            --num_epochs=1 \
+            --num_predictions=${NUM_PREDICTIONS} \
+            --alsologtostderr
+    done
 fi
 
 # Run visualization
@@ -120,4 +121,4 @@ if [[ "$run_mode" == "visualization" ]]; then
         --alsologtostderr
 fi
 
-Banner "Finished ${run_mode} for ${NUM_STEPS} steps."
+Banner "Finished ${run_mode} for ${NUM_EPOCHS} epochs."
