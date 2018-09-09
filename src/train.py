@@ -136,34 +136,41 @@ def alex_net(images, norm_params, mode):
             activation_fn=tf.nn.leaky_relu,
             normalizer_fn=layers.batch_norm,
             normalizer_params=norm_params):
-        conv1 = layers.conv2d(images, 96, 11, 2, 
+        conv1 = layers.conv2d(images, 96, 7, 3, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv1.shape))
         pool1 = layers.max_pool2d(conv1, 3, 2,
+                padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool1.shape))
         conv2 = layers.conv2d(pool1, 256, 5, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv2.shape))
         pool2 = layers.max_pool2d(conv2, 3, 2,
+                padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool2.shape))
         conv3 = layers.conv2d(pool2, 384, 3, 1, 
+                normalizer_fn=None, normalizer_params=None,
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv3.shape))
         conv4 = layers.conv2d(conv3, 384, 3, 1, 
+                normalizer_fn=None, normalizer_params=None,
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv4.shape))
         conv5 = layers.conv2d(conv4, 256, 3, 1, 
+                normalizer_fn=None, normalizer_params=None,
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv5.shape))
         pool3 = layers.max_pool2d(conv5, 3, 2,
+                padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool3.shape))
 
         flat = layers.flatten(pool3)
         print("after flat layers output size: {}".format(flat.shape))
-        fc1 = layers.fully_connected(flat, 4096)
+        fc1 = layers.fully_connected(flat, 4096,
+                normalizer_fn=None, normalizer_params=None)
         print("fc layers output size: {}".format(fc1.shape))
         fc1_dropout = layers.dropout(fc1, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
@@ -172,7 +179,8 @@ def alex_net(images, norm_params, mode):
         fc2_dropout = layers.dropout(fc2, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
         logits = layers.fully_connected(
-                fc2_dropout, ts._NUM_CLASSES, activation_fn=None)
+                fc2_dropout, ts._NUM_CLASSES, activation_fn=None,
+                normalizer_fn=None, normalizer_params=None)
         print("fc layers output size: {}".format(logits.shape))
         sys.stdout.flush()
     return logits
@@ -276,6 +284,13 @@ def main(_):
             FLAGS.batch_size)))
     test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
             FLAGS.batch_size)))
+
+    '''
+    #############Remember to change##############
+    epoch_size = 300
+    test_size = 10
+    #############Remember to change##############
+    '''
 
     my_checkpointing_config = tf.estimator.RunConfig(
             save_checkpoints_steps = epoch_size)
