@@ -68,7 +68,8 @@ TRAIN_DIR=ts-models/${version}
 EVAL_DIR=ts-models/eval/${version}
 
 # Where the dataset is saved to.
-DATASET_DIR=datasets/sentibank_flickr/regular/tfrecord
+# DATASET_DIR=datasets/sentibank_flickr/regular_128/tfrecord
+DATASET_DIR=datasets/sentibank_flickr/regular_256/tfrecord
 
 export PYTHONPATH=$PYTHONPATH:$git_repo:$git_repo/research:$git_repo/research/slim
 

@@ -1,3 +1,4 @@
+# remove classes that has fewer than "threshold" samples
 import os
 from shutil import move
 

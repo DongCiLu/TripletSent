@@ -1,10 +1,11 @@
+# Split the data into train and test
 import os
 import numpy as np
 from shutil import copyfile
 
-src_dir = "../datasets/sentibank_flickr/preprocessed"
-train_base_dir = "../datasets/sentibank_flickr/regular/train"
-test_base_dir = "../datasets/sentibank_flickr/regular/test"
+src_dir = "../datasets/sentibank_flickr/preprocessed_256"
+train_base_dir = "../datasets/sentibank_flickr/regular_256/train"
+test_base_dir = "../datasets/sentibank_flickr/regular_256/test"
 
 split_ratio = 0.7 
 

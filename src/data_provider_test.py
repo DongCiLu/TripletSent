@@ -29,9 +29,9 @@ import data_provider
 
 class DataProviderTest(tf.test.TestCase):
     def test_celegans_data_reading(self):
-        split_name = 'train'
+        split_name = 'predict'
         batch_size = 10
-        dataset_dir = "datasets/sentibank_flickr/regular/tfrecord"
+        dataset_dir = "datasets/sentibank_flickr/regular_256/tfrecord"
         images, oh_labels, filenames, ax_labels, num_samples = \
                 data_provider.provide_data(
                 split_name, batch_size, dataset_dir)
@@ -42,7 +42,7 @@ class DataProviderTest(tf.test.TestCase):
                         sess.run([images, oh_labels, 
                                   filenames, ax_labels])
             for image, cnt in zip(images, range(len(images))):
-                print(image)
+                print(image.shape)
 
 if __name__ == '__main__':
     tf.test.main()

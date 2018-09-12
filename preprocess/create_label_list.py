@@ -1,6 +1,8 @@
+# Create label file from the dataset
+
 import os
 
-dataset_dir = "../datasets/sentibank_flickr/preprocessed"
+dataset_dir = "../datasets/sentibank_flickr/preprocessed_256"
 outlist = open("label_list.txt", 'w')
 
 buffer_list = []

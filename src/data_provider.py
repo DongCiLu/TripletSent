@@ -28,14 +28,8 @@ import ts
 slim = tf.contrib.slim
 
 def data_augmentation(image):
-    image = tf.image.random_flip_up_down(image)
     image = tf.image.random_flip_left_right(image)
-    '''
-    image = tf.image.random_brightness(image, max_delta=32. / 255.)
-    image = tf.image.random_contrast(image, lower=0.5, upper=1.5)
-    image = tf.minimum(image, 1.0)
-    image = tf.maximum(image, 0.0)
-    '''
+    image = tf.random_crop(image, [ts._CROP_SIZE, ts._CROP_SIZE, 3])
 
     return image
 
@@ -73,11 +67,14 @@ def provide_data(split_name, batch_size,
     # image = tf.image.resize_images(image, [height, width])
 
     # Data augmentation.
-    if split_name == "train":
+    if split_name == 'train':
         print("enable data augmentation")
-        # image = tf.to_float(image) / 255.0
         image = data_augmentation(image)
-        # image = tf.cast(image * 255.0, tf.uint8)
+    else: # 'predict' or 'test'
+        print("central crop testing data")
+        # image = tf.image.central_crop(image, _CROP_RATIO)
+        image = tf.image.resize_image_with_crop_or_pad(
+                image, ts._CROP_SIZE, ts._CROP_SIZE)
 
     # Change the images to [-1.0, 1.0).
     image = (tf.to_float(image) - 128.0) / 128.0

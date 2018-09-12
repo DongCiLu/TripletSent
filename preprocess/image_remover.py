@@ -1,3 +1,5 @@
+# Delete files that are not images
+
 import os
 import sys
 import cPickle as pickle

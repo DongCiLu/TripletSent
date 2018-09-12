@@ -1,8 +1,9 @@
+# create look up tables for noun and adj from label file
 import pickle
 
-NUM_ANP = 914
+NUM_ANP = 910
 
-label_file = 'label_list_{}.txt'.format(NUM_ANP)
+label_file = 'label_list_256.txt'
 
 noun_dict = {}
 adj_dict = {}

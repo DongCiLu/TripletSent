@@ -1,3 +1,4 @@
+# Remove invalid image and normalize image size
 import os
 import sys
 import math

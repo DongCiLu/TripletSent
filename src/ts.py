@@ -32,6 +32,8 @@ slim = tf.contrib.slim
 
 _FILE_PATTERN = 'ts-%s.tfrecord'
 
+'''
+#  Configuration for 128x128 dataset
 _SPLITS_TO_SIZES = {'train': 285932, 
                     'test': 121738, 
                     'predict': 121738}
@@ -39,6 +41,19 @@ _SPLITS_TO_SIZES = {'train': 285932,
 _IMG_SIZE = 128
 _NUM_CHANNELS = 3
 _NUM_CLASSES = 914
+_CROP_SIZE = 114
+'''
+
+#  Configuration for 256x256 dataset
+_SPLITS_TO_SIZES = {'train': 282531, 
+                    'test': 121288, 
+                    'predict': 121288}
+
+_IMG_SIZE = 256
+_NUM_CHANNELS = 3
+_NUM_CLASSES = 910
+_CROP_SIZE = 227
+
 
 _ITEMS_TO_DESCRIPTIONS = {
         'image': 'A [128 x 128 x 3] RGB image.',
