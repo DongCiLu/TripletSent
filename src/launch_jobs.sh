@@ -55,6 +55,15 @@ if [[ "$NUM_EPOCHS" == "" ]]; then
     NUM_EPOCHS=1
 fi
 
+# define which GPU to run on
+gpu_unit=$4
+if [[ "$gpu_unit" == "" ]]; then
+    echo "use default gpu (GPU0)."
+    gpu_unit=0
+fi
+
+export CUDA_VISIBLE_DEVICES=$gpu_unit
+
 # Location of the git repository.
 git_repo="../Tensorflow-models"
 
