@@ -56,10 +56,10 @@ if [[ "$NUM_EPOCHS" == "" ]]; then
 fi
 
 # Location of the git repository.
-git_repo="/home/zlu12/Tensorflow-models"
+git_repo="../Tensorflow-models"
 
 # Location of the src directory
-src_dir="/home/zlu12/TripletSent/src"
+src_dir="../TripletSent/src"
 
 # Base name for where the checkpoint and logs will be saved to.
 TRAIN_DIR=ts-models/${version}
