@@ -8,7 +8,7 @@ train_base_dir = "../datasets/sentibank_flickr/regular_256/train"
 test_base_dir = "../datasets/sentibank_flickr/regular_256/test"
 
 split_ratio = 0.7 
-hard_cap = 20
+# hard_cap = 20
 
 for subdir, dirs, files in os.walk(src_dir):
     if src_dir == subdir:
@@ -31,8 +31,8 @@ for subdir, dirs, files in os.walk(src_dir):
         total_cnt += 1
         src_fp = os.path.join(subdir, f)
         r = np.random.uniform()
-        # if r < 0.7:
-        if r < 0.7 or test_cnt >= hard_cap:
+        if r < 0.7:
+        # if r < 0.7 or test_cnt >= hard_cap:
             dst_fp = os.path.join(train_dir, f)
             train_cnt += 1
         else:

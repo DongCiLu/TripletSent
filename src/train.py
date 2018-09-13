@@ -58,11 +58,13 @@ flags.DEFINE_string('mode', 'training',
 flags.DEFINE_float('lr', 1e-4, 
         'Learning rate for the network.')
 
+flags.DEFINE_string('optimizer', 'Adam',
+        'Optimizer, possible value: GD, Momentum, Adam.')
+
 flags.DEFINE_integer('num_epochs', 1,
         'The number of training epochs.')
 
-# flags.DEFINE_string('data_format', 'NCHW',
-flags.DEFINE_string('data_format', 'NHWC',
+flags.DEFINE_string('data_format', 'NCHW',
         'Data format, possible value: NCHW or NHWC.')
 
 flags.DEFINE_integer('num_predictions', 1,
@@ -100,37 +102,6 @@ def input_fn(split_name):
                 'axillary_labels': axillary_labels}
     return features, onehot_labels 
 
-# _leaky_relu = lambda x: tf.nn.leaky_relu(x, alpha=0.01)
-
-def deep_conv_net(images, norm_params, mode):
-    with tf.contrib.framework.arg_scope(
-            [layers.conv2d, layers.fully_connected],
-            activation_fn=tf.nn.leaky_relu,
-            normalizer_fn=layers.batch_norm,
-            normalizer_params=norm_params):
-        conv = []
-        n_filters = int(_NN_BASE_NUM_FILTERS / (2 ** _NUM_CNN_LAYERS))
-        kernel_size = 4
-        stride_size = 2
-        output_lastlayer = images
-        for i in range(_NUM_CNN_LAYERS):
-            conv.append(layers.conv2d(output_lastlayer, n_filters, 
-                kernel_size, stride_size, 
-                data_format=FLAGS.data_format))
-            n_filters *= 2
-            output_lastlayer = conv[-1]
-            print("conv layers output size: {}".format(conv[-1].shape))
-        flat = layers.flatten(conv[-1])
-        fc1 = layers.fully_connected(flat, _NN_NUM_FC_HIDDEN)
-        print("fc layers output size: {}".format(fc1.shape))
-        fc1_dropout = layers.dropout(fc1, 
-                is_training=(mode==tf.estimator.ModeKeys.TRAIN))
-        logits = layers.fully_connected(
-                fc1_dropout, ts._NUM_CLASSES, activation_fn=None)
-        print("fc layers output size: {}".format(logits.shape))
-        sys.stdout.flush()
-    return logits
-
 def alex_net(images, norm_params, mode):
     with tf.contrib.framework.arg_scope(
             [layers.conv2d, layers.fully_connected],
@@ -144,14 +115,14 @@ def alex_net(images, norm_params, mode):
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool1.shape))
-        conv2 = layers.conv2d(pool1, 256, 5, 1, 
+        conv2 = layers.conv2d(pool1, 256, 7, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv2.shape))
         pool2 = layers.max_pool2d(conv2, 3, 2,
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool2.shape))
-        conv3 = layers.conv2d(pool2, 384, 3, 1, 
+        conv3 = layers.conv2d(pool2, 384, 5, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv3.shape))
         conv4 = layers.conv2d(conv3, 384, 3, 1, 
@@ -179,6 +150,7 @@ def alex_net(images, norm_params, mode):
                 fc2_dropout, ts._NUM_CLASSES, activation_fn=None)
         print("fc layers output size: {}".format(logits.shape))
         sys.stdout.flush()
+        
     return logits
 
 def cnn_model(features, labels, mode):
@@ -202,7 +174,6 @@ def cnn_model(features, labels, mode):
                 'updates_collections': None}
 
     # Create the network
-    # logits = deep_conv_net(images, norm_params, mode) 
     logits = alex_net(images, norm_params, mode) 
 
     # Inference
@@ -221,7 +192,27 @@ def cnn_model(features, labels, mode):
     loss = tf.losses.softmax_cross_entropy(
             onehot_labels=onehot_labels, logits=logits)
     if mode == tf.estimator.ModeKeys.TRAIN:
-        optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.lr)
+        if FLAGS.optimizer == 'GD':
+            decay_factor = 0.9
+            learning_rate = tf.train.exponential_decay(FLAGS.lr,
+                    tf.train.get_global_step(),
+                    int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
+                        FLAGS.batch_size))),
+                    decay_factor)
+            optimizer = tf.train.GradientDescentOptimizer(
+                    learning_rate=learning_rate)
+        elif FLAGS.optimizer == 'Momentum':
+            decay_factor = 0.9
+            learning_rate = tf.train.exponential_decay(FLAGS.lr,
+                    tf.train.get_global_step(),
+                    int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
+                        FLAGS.batch_size))),
+                    decay_factor)
+            optimizer = tf.train.MomentumOptimizer(
+                    learning_rate=learning_rate, momentum=0.9)
+        else:
+            optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.lr)
+
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             train_op = optimizer.minimize(loss, 
@@ -281,10 +272,12 @@ def main(_):
     test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
             FLAGS.batch_size)))
 
+    '''
     #############Remember to change##############
-    epoch_size = 300
+    epoch_size = 500
     test_size = 10
     #############Remember to change##############
+    '''
 
     session_config = tf.ConfigProto()
     session_config.gpu_options.allow_growth=True
@@ -303,8 +296,8 @@ def main(_):
                 max_steps=(FLAGS.num_epochs * epoch_size))
         eval_spec = tf.estimator.EvalSpec(input_fn=
                 lambda: input_fn('test'),
-                steps=test_size)
-                # throttle_secs=5, start_delay_secs=5)
+                steps=test_size,
+                throttle_secs=60, start_delay_secs=60)
         tf.estimator.train_and_evaluate(
                 classifier, train_spec, eval_spec)
 

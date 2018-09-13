@@ -34,7 +34,7 @@ def data_augmentation(image):
     return image
 
 def provide_data(split_name, batch_size, 
-        dataset_dir, num_readers=1, num_threads=1):
+        dataset_dir, num_readers=1, num_threads=4):
     """Provides batches of MNIST digits.
 
     Args:

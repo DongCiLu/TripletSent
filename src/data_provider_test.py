@@ -29,20 +29,24 @@ import data_provider
 
 class DataProviderTest(tf.test.TestCase):
     def test_celegans_data_reading(self):
-        split_name = 'predict'
-        batch_size = 10
+        split_name = 'train'
+        batch_size = 30000
         dataset_dir = "datasets/sentibank_flickr/regular_256/tfrecord"
         images, oh_labels, filenames, ax_labels, num_samples = \
                 data_provider.provide_data(
-                split_name, batch_size, dataset_dir)
+                split_name, batch_size, dataset_dir, 
+                num_readers = 1, num_threads = 1)
 
         with self.test_session() as sess:
             with tf.contrib.slim.queues.QueueRunners(sess):
                 images, oh_labels, filenames, ax_labels = \
                         sess.run([images, oh_labels, 
                                   filenames, ax_labels])
+            '''
+            print(images.shape)
             for image, cnt in zip(images, range(len(images))):
                 print(image.shape)
+            '''
 
 if __name__ == '__main__':
     tf.test.main()

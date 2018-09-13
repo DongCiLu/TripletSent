@@ -31,6 +31,7 @@ from datasets import dataset_utils
 slim = tf.contrib.slim
 
 _FILE_PATTERN = 'ts-%s.tfrecord'
+# _FILE_PATTERN = '%s-*'
 
 '''
 #  Configuration for 128x128 dataset
@@ -47,14 +48,14 @@ _CROP_SIZE = 114
 #  Configuration for 256x256 dataset
 
 # 0.7 split dataset
-# _SPLITS_TO_SIZES = {'train': 282531, 
-                    # 'test': 121288, 
-                    # 'predict': 121288}
+_SPLITS_TO_SIZES = {'train': 282531, 
+                    'test': 121288, 
+                    'predict': 121288}
 
 # 20 cap dataset
-_SPLITS_TO_SIZES = {'train': 386619, 
-                    'test': 18200, 
-                    'predict': 18200}
+# _SPLITS_TO_SIZES = {'train': 386619, 
+                    # 'test': 18200, 
+                    # 'predict': 18200}
 
 _IMG_SIZE = 256
 _NUM_CHANNELS = 3
@@ -94,6 +95,7 @@ def get_split(split_name, dataset_dir,
     if not file_pattern:
         file_pattern = _FILE_PATTERN
     file_pattern = os.path.join(dataset_dir, file_pattern % split_name)
+    print("Currently using file pattern: {}".format(file_pattern))
 
     # Allowing None in the signature so that dataset_factory can use the default.
     if reader is None:
