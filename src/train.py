@@ -61,7 +61,8 @@ flags.DEFINE_float('lr', 1e-4,
 flags.DEFINE_integer('num_epochs', 1,
         'The number of training epochs.')
 
-flags.DEFINE_string('data_format', 'NCHW',
+# flags.DEFINE_string('data_format', 'NCHW',
+flags.DEFINE_string('data_format', 'NHWC',
         'Data format, possible value: NCHW or NHWC.')
 
 flags.DEFINE_integer('num_predictions', 1,
@@ -302,8 +303,8 @@ def main(_):
                 max_steps=(FLAGS.num_epochs * epoch_size))
         eval_spec = tf.estimator.EvalSpec(input_fn=
                 lambda: input_fn('test'),
-                steps=test_size,
-                throttle_secs=5, start_delay_secs=5)
+                steps=test_size)
+                # throttle_secs=5, start_delay_secs=5)
         tf.estimator.train_and_evaluate(
                 classifier, train_spec, eval_spec)
 

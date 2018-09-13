@@ -45,9 +45,16 @@ _CROP_SIZE = 114
 '''
 
 #  Configuration for 256x256 dataset
-_SPLITS_TO_SIZES = {'train': 282531, 
-                    'test': 121288, 
-                    'predict': 121288}
+
+# 0.7 split dataset
+# _SPLITS_TO_SIZES = {'train': 282531, 
+                    # 'test': 121288, 
+                    # 'predict': 121288}
+
+# 20 cap dataset
+_SPLITS_TO_SIZES = {'train': 386619, 
+                    'test': 18200, 
+                    'predict': 18200}
 
 _IMG_SIZE = 256
 _NUM_CHANNELS = 3
