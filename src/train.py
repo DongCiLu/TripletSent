@@ -122,7 +122,7 @@ def alex_net(images, norm_params, mode):
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool2.shape))
-        conv3 = layers.conv2d(pool2, 384, 5, 1, 
+        conv3 = layers.conv2d(pool2, 384, 3, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv3.shape))
         conv4 = layers.conv2d(conv3, 384, 3, 1, 
