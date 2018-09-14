@@ -23,6 +23,7 @@ import functools
 import os
 import sys
 import math
+import time
 import pickle
 from PIL import Image
 from PIL import ImageDraw
@@ -44,7 +45,7 @@ _NUM_CNN_LAYERS = 5
 
 flags = tf.flags
 
-flags.DEFINE_integer('batch_size', 32, 
+flags.DEFINE_integer('batch_size', 8, 
         'The number of images in each batch.')
 
 flags.DEFINE_string('train_log_dir', '/tmp/mnist/',
@@ -115,7 +116,7 @@ def alex_net(images, norm_params, mode):
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool1.shape))
-        conv2 = layers.conv2d(pool1, 256, 7, 1, 
+        conv2 = layers.conv2d(pool1, 256, 5, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv2.shape))
         pool2 = layers.max_pool2d(conv2, 3, 2,
@@ -266,6 +267,8 @@ def customized_evaluation(
 def main(_):
     if not tf.gfile.Exists(FLAGS.train_log_dir):
         tf.gfile.MakeDirs(FLAGS.train_log_dir)
+
+    tf.set_random_seed(time.time())
 
     epoch_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
             FLAGS.batch_size)))

@@ -19,17 +19,37 @@ from __future__ import division
 from __future__ import print_function
 
 
-
+import math
 import tensorflow as tf
 
 # from slim.datasets import dataset_factory as datasets
 import ts
 
+_DA_ROTATE_LIMIT = 10
+_LEN_LIMIT = 1 - 2.0 * (ts._IMG_SIZE - ts._INPUT_SIZE) / ts._IMG_SIZE
+
 slim = tf.contrib.slim
 
 def data_augmentation(image):
     image = tf.image.random_flip_left_right(image)
-    image = tf.random_crop(image, [ts._CROP_SIZE, ts._CROP_SIZE, 3])
+    '''
+    rotate_degree = tf.random_uniform(
+            [], -_DA_ROTATE_LIMIT, _DA_ROTATE_LIMIT)
+    image = tf.contrib.image.rotate(
+            image, rotate_degree * math.pi / 180, 'BILINEAR')
+    l = tf.random_uniform([], _LEN_LIMIT, 1)
+    x = tf.random_uniform([], 0, 1 - l)
+    y = tf.random_uniform([], 0, 1 - l)
+    boxes = tf.stack([y, x, y + l, x + l])
+    crop_size = [ts._INPUT_SIZE, ts._INPUT_SIZE]
+    image = tf.image.crop_and_resize(
+            tf.expand_dims(image, 0), 
+            tf.expand_dims(boxes, 0), 
+            [0], crop_size)
+    image = tf.squeeze(image)
+    '''
+    image = tf.random_crop(
+            image, [ts._INPUT_SIZE, ts._INPUT_SIZE, 3])
 
     return image
 
@@ -63,8 +83,8 @@ def provide_data(split_name, batch_size,
     [image, label, filename] = \
             provider.get(['image', 'label', 'filename'])
 
-    # Resize image to an acceptable size
-    # image = tf.image.resize_images(image, [height, width])
+    # Change the images to [-1.0, 1.0).
+    image = (tf.to_float(image) - 128.0) / 128.0
 
     # Data augmentation.
     if split_name == 'train':
@@ -75,9 +95,6 @@ def provide_data(split_name, batch_size,
         # image = tf.image.central_crop(image, _CROP_RATIO)
         image = tf.image.resize_image_with_crop_or_pad(
                 image, ts._CROP_SIZE, ts._CROP_SIZE)
-
-    # Change the images to [-1.0, 1.0).
-    image = (tf.to_float(image) - 128.0) / 128.0
 
     # Creates a QueueRunner for the pre-fetching operation.
     images, labels, filenames = tf.train.batch(

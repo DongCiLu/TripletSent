@@ -103,7 +103,7 @@ if [[ "$run_mode" == "training" ]]; then
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
         --mode="training" \
-        --optimizer="GD" \
+        --optimizer="Adam" \
         --num_epochs=${NUM_EPOCHS} \
         --alsologtostderr
 fi
