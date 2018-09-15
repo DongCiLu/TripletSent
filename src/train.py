@@ -45,7 +45,7 @@ _NUM_CNN_LAYERS = 5
 
 flags = tf.flags
 
-flags.DEFINE_integer('batch_size', 8, 
+flags.DEFINE_integer('batch_size', 32, 
         'The number of images in each batch.')
 
 flags.DEFINE_string('train_log_dir', '/tmp/mnist/',
