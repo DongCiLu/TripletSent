@@ -98,7 +98,7 @@ def provide_data(split_name, batch_size,
         print("central crop testing data")
         # image = tf.image.central_crop(image, _CROP_RATIO)
         image = tf.image.resize_image_with_crop_or_pad(
-                image, ts._CROP_SIZE, ts._CROP_SIZE)
+                image, ts._INPUT_SIZE, ts._INPUT_SIZE)
 
     # Creates a QueueRunner for the pre-fetching operation.
     images, labels, filenames = tf.train.batch(
