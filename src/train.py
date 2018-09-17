@@ -56,7 +56,7 @@ flags.DEFINE_string('dataset_dir', None, 'Location of data.')
 flags.DEFINE_string('mode', 'training', 
         'All modes: [training inference visualization].')
 
-flags.DEFINE_float('lr', 1e-4, 
+flags.DEFINE_float('lr', 1e-3, 
         'Learning rate for the network.')
 
 flags.DEFINE_string('optimizer', 'Adam',
@@ -90,7 +90,8 @@ def input_fn(split_name):
 
     images, onehot_labels, filenames, axillary_labels, _ = \
             data_provider.provide_data(split_name, 
-            batch_size, FLAGS.dataset_dir)
+            batch_size, FLAGS.dataset_dir, 
+            num_readers=1, num_threads=4)
 
     print("Tensor formatting check: ")
     print("image shape:{}".format(images.shape))
@@ -116,14 +117,14 @@ def alex_net(images, norm_params, mode):
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool1.shape))
-        conv2 = layers.conv2d(pool1, 256, 5, 1, 
+        conv2 = layers.conv2d(pool1, 256, 7, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv2.shape))
         pool2 = layers.max_pool2d(conv2, 3, 2,
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool2.shape))
-        conv3 = layers.conv2d(pool2, 384, 3, 1, 
+        conv3 = layers.conv2d(pool2, 384, 5, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv3.shape))
         conv4 = layers.conv2d(conv3, 384, 3, 1, 
@@ -275,12 +276,10 @@ def main(_):
     test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
             FLAGS.batch_size)))
 
-    '''
     #############Remember to change##############
     epoch_size = 500
     test_size = 10
     #############Remember to change##############
-    '''
 
     session_config = tf.ConfigProto()
     session_config.gpu_options.allow_growth=True

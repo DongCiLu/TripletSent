@@ -25,18 +25,21 @@ import tensorflow as tf
 # from slim.datasets import dataset_factory as datasets
 import ts
 
-_DA_ROTATE_LIMIT = 10
+_DA_ROTATE_LIMIT = 30
 _LEN_LIMIT = 1 - 2.0 * (ts._IMG_SIZE - ts._INPUT_SIZE) / ts._IMG_SIZE
 
 slim = tf.contrib.slim
 
 def data_augmentation(image):
+    # flip image
     image = tf.image.random_flip_left_right(image)
-    '''
+    # rotate small angles
     rotate_degree = tf.random_uniform(
             [], -_DA_ROTATE_LIMIT, _DA_ROTATE_LIMIT)
     image = tf.contrib.image.rotate(
             image, rotate_degree * math.pi / 180, 'BILINEAR')
+    '''
+    # zoom in or out images
     l = tf.random_uniform([], _LEN_LIMIT, 1)
     x = tf.random_uniform([], 0, 1 - l)
     y = tf.random_uniform([], 0, 1 - l)
@@ -48,13 +51,14 @@ def data_augmentation(image):
             [0], crop_size)
     image = tf.squeeze(image)
     '''
+    # random crop images
     image = tf.random_crop(
             image, [ts._INPUT_SIZE, ts._INPUT_SIZE, 3])
 
     return image
 
 def provide_data(split_name, batch_size, 
-        dataset_dir, num_readers=1, num_threads=4):
+        dataset_dir, num_readers=1, num_threads=1):
     """Provides batches of MNIST digits.
 
     Args:
