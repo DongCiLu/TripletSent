@@ -117,14 +117,14 @@ def alex_net(images, norm_params, mode):
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool1.shape))
-        conv2 = layers.conv2d(pool1, 256, 7, 1, 
+        conv2 = layers.conv2d(pool1, 256, 5, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv2.shape))
         pool2 = layers.max_pool2d(conv2, 3, 2,
                 # padding='SAME',
                 data_format=FLAGS.data_format)
         print("pooling layers output size: {}".format(pool2.shape))
-        conv3 = layers.conv2d(pool2, 384, 5, 1, 
+        conv3 = layers.conv2d(pool2, 384, 3, 1, 
                 data_format=FLAGS.data_format)
         print("conv layers output size: {}".format(conv3.shape))
         conv4 = layers.conv2d(conv3, 384, 3, 1, 
@@ -195,7 +195,7 @@ def cnn_model(features, labels, mode):
             onehot_labels=onehot_labels, logits=logits)
     if mode == tf.estimator.ModeKeys.TRAIN:
         if FLAGS.optimizer == 'GD':
-            decay_factor = 0.9
+            decay_factor = 0.96
             learning_rate = tf.train.exponential_decay(FLAGS.lr,
                     tf.train.get_global_step(),
                     int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
@@ -204,7 +204,7 @@ def cnn_model(features, labels, mode):
             optimizer = tf.train.GradientDescentOptimizer(
                     learning_rate=learning_rate)
         elif FLAGS.optimizer == 'Momentum':
-            decay_factor = 0.9
+            decay_factor = 0.96
             learning_rate = tf.train.exponential_decay(FLAGS.lr,
                     tf.train.get_global_step(),
                     int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
