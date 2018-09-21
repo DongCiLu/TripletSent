@@ -11,8 +11,16 @@ for subdir, dirs, files in os.walk(dataset_dir):
     if len(segs) < 5:
         print "head"
         continue
-
+    
     buffer_list.append(segs[-1])
+
+    '''
+    segs = segs[-1].split('_')
+    noun = segs[1]
+    adj = segs[0]
+    if adj not in buffer_list:
+        buffer_list.append(adj)
+    '''
 
 for ANP in sorted(buffer_list):
     outlist.write("{}\n".format(ANP))

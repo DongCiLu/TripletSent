@@ -38,8 +38,8 @@ set -e
 
 # define run mode
 run_mode=$1
-if ! [[ "$run_mode" =~ ^(test|training|custom_training|visualization) ]]; then
-    echo "'run_mode' must be one of: 'test', 'training', 'custom_training', 'visualization'."
+if ! [[ "$run_mode" =~ ^(test|training|custom_training|custom_evaluation|visualization) ]]; then
+    echo "'run_mode' mus t be one of: 'test', 'training', 'custom_training', 'custom_evaluation', 'visualization'."
     exit
 fi
 
@@ -121,6 +121,18 @@ if [[ "$run_mode" == "custom_training" ]]; then
             --num_predictions=${NUM_PREDICTIONS} \
             --alsologtostderr
     done
+fi
+
+# Run customized evaluation
+if [[ "$run_mode" == "custom_evaluation" ]]; then
+    NUM_PREDICTIONS=121738
+    python "${src_dir}/train.py" \
+        --train_log_dir=${TRAIN_DIR} \
+        --dataset_dir=${DATASET_DIR} \
+        --mode="custom_training" \
+        --num_epochs=0 \
+        --num_predictions=${NUM_PREDICTIONS} \
+        --alsologtostderr
 fi
 
 # Run visualization

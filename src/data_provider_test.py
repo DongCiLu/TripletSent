@@ -35,19 +35,18 @@ class DataProviderTest(tf.test.TestCase):
         dataset_dir = "datasets/sentibank_flickr/regular_256/tfrecord"
         print (time.time())
         tf.set_random_seed(time.time())
-        images, oh_labels, filenames, \
-                ax_labels, num_samples, boxes, rotate_degree = \
+        images, oh_labels, filenames, ax_labels, num_samples = \
                 data_provider.provide_data(
                 split_name, batch_size, dataset_dir, 
                 num_readers = 1, num_threads = 1)
 
+        '''
         with self.test_session() as sess:
             with tf.contrib.slim.queues.QueueRunners(sess):
-                images, oh_labels, filenames, \
-                        ax_labels, boxes, rotate_degree = \
-                        sess.run([images, oh_labels, filenames, 
-                        ax_labels, boxes, rotate_degree])
-                print(rotate_degree)
+                images, oh_labels, filenames, ax_labels = \
+                        sess.run([images, oh_labels, filenames, ax_labels])
+                print (images)
+        '''
 
 if __name__ == '__main__':
     tf.test.main()

@@ -39,10 +39,6 @@ from tensorflow.python.framework import ops
 import ts
 import data_provider
 
-_NN_BASE_NUM_FILTERS = 1024
-_NN_NUM_FC_HIDDEN = 2048
-_NUM_CNN_LAYERS = 5
-
 flags = tf.flags
 
 flags.DEFINE_integer('batch_size', 32, 
@@ -309,9 +305,10 @@ def main(_):
         # We use this as a customized evaluation
         noun_list, adj_list = load_noun_adj_list()
 
-        classifier.train(
-                input_fn=lambda: input_fn('train'),
-                steps=(FLAGS.num_epochs * epoch_size))
+        if FLAGS.num_epochs != 0:
+            classifier.train(
+                    input_fn=lambda: input_fn('train'),
+                    steps=(FLAGS.num_epochs * epoch_size))
         predictions = classifier.predict(
                 input_fn=lambda:input_fn('predict'))
         customized_evaluation(
