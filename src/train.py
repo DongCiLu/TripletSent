@@ -27,9 +27,9 @@ import time
 import pickle
 from PIL import Image
 from PIL import ImageDraw
-import matplotlib as mpl
-mpl.use("Agg")
-import matplotlib.pyplot as plt
+# import matplotlib as mpl
+# mpl.use("Agg")
+# import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 layers = tf.contrib.layers
