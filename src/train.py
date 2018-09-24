@@ -35,6 +35,8 @@ import tensorflow as tf
 layers = tf.contrib.layers
 from tensorflow.python import debug as tf_debug
 from tensorflow.python.framework import ops
+import slim
+from slim.nets import resnet_v2
 
 import ts
 import data_provider
@@ -51,6 +53,9 @@ flags.DEFINE_string('dataset_dir', None, 'Location of data.')
 
 flags.DEFINE_string('mode', 'training', 
         'All modes: [training inference visualization].')
+
+flags.DEFINE_string('network', 'resnet', 
+        'Which network to use: alexnet or resnet.')
 
 flags.DEFINE_float('lr', 1e-3, 
         'Learning rate for the network.')
@@ -100,7 +105,7 @@ def input_fn(split_name):
                 'axillary_labels': axillary_labels}
     return features, onehot_labels 
 
-def alex_net(images, norm_params, mode):
+def alexnet(images, norm_params, mode):
     with tf.contrib.framework.arg_scope(
             [layers.conv2d, layers.fully_connected],
             activation_fn=tf.nn.leaky_relu,
@@ -157,22 +162,30 @@ def cnn_model(features, labels, mode):
     onehot_labels = labels
     axillary_labels = features['axillary_labels']
 
-    # Format data
-    if FLAGS.data_format == 'NCHW':
-        print("Converting data format to channels first (NCHW)")
-        images = tf.transpose(images, [0, 3, 1, 2])
+    if FLAGS.network == 'alexnet':
+        # Format data
+        if FLAGS.data_format == 'NCHW':
+            print("Converting data format to channels first (NCHW)")
+            images = tf.transpose(images, [0, 3, 1, 2])
 
-    # Setup batch normalization
-    if mode == tf.estimator.ModeKeys.TRAIN:
-        norm_params={'is_training':True, 
-                'data_format': FLAGS.data_format}
-    else:
-        norm_params={'is_training':False,
-                'data_format': FLAGS.data_format,
-                'updates_collections': None}
+        # Setup batch normalization
+        if mode == tf.estimator.ModeKeys.TRAIN:
+            norm_params={'is_training':True, 
+                    'data_format': FLAGS.data_format}
+        else:
+            norm_params={'is_training':False,
+                    'data_format': FLAGS.data_format,
+                    'updates_collections': None}
 
-    # Create the network
-    logits = alex_net(images, norm_params, mode) 
+        # Create the network
+        logits = alexnet(images, norm_params, mode) 
+
+    elif FLAGS.network == 'resnet':
+        # with slim.arg_scope(resnet_v2.resnet_arg_scope()):
+        logits, end_points = resnet_v2.resnet_v2_50(inputs=images, 
+                num_classes=ts._NUM_CLASSES, 
+                is_training=(mode==tf.estimator.ModeKeys.TRAIN))
+        print ("output for resnet: {}".format(logits.shape))
 
     # Inference
     predicted_classes = tf.argmax(logits, 1)
