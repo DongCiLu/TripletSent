@@ -38,35 +38,35 @@ if _CONFIGURATION == "128_NORMAL":
     _IMG_SIZE = 128
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 914
-    _INPUT_SIZE = 114
+    _INPUT_SIZE = 112
 elif _CONFIGURATION == "256_NORMAL":
     _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
     _SPLITS_TO_SIZES = {'train': 282531, 'test': 121288, 'predict': 121288}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 910
-    _INPUT_SIZE = 227
+    _INPUT_SIZE = 224
 elif _CONFIGURATION == "256_CAP20":
     _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
     _SPLITS_TO_SIZES = {'train': 386619, 'test': 18200, 'predict': 18200}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 910
-    _INPUT_SIZE = 227
+    _INPUT_SIZE = 224
 elif _CONFIGURATION == "256_NOUN":
     _FILE_PATTERN = 'ts-%s_noun.tfrecord'
     _SPLITS_TO_SIZES = {'train': 283363, 'test': 120813, 'predict': 120813}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 269
-    _INPUT_SIZE = 227
+    _INPUT_SIZE = 224
 elif _CONFIGURATION == "256_ADJ":
     _FILE_PATTERN = 'ts-%s_adj.tfrecord'
     _SPLITS_TO_SIZES = {'train': 283356, 'test': 120812, 'predict': 120812}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 156
-    _INPUT_SIZE = 227
+    _INPUT_SIZE = 224
 else:
     _FILE_PATTERN = '%s'
     _SPLITS_TO_SIZES = {'train': 0, 'test': 0, 'predict': 0}

@@ -37,6 +37,7 @@ from tensorflow.python import debug as tf_debug
 from tensorflow.python.framework import ops
 import slim
 from slim.nets import resnet_v2
+from slim.nets import alexnet
 
 import ts
 import data_provider
@@ -105,7 +106,7 @@ def input_fn(split_name):
                 'axillary_labels': axillary_labels}
     return features, onehot_labels 
 
-def alexnet(images, norm_params, mode):
+def alexnet_alter(images, norm_params, mode):
     with tf.contrib.framework.arg_scope(
             [layers.conv2d, layers.fully_connected],
             activation_fn=tf.nn.leaky_relu,
@@ -162,7 +163,7 @@ def cnn_model(features, labels, mode):
     onehot_labels = labels
     axillary_labels = features['axillary_labels']
 
-    if FLAGS.network == 'alexnet':
+    if FLAGS.network == 'alexnet_alter':
         # Format data
         if FLAGS.data_format == 'NCHW':
             print("Converting data format to channels first (NCHW)")
@@ -178,14 +179,17 @@ def cnn_model(features, labels, mode):
                     'updates_collections': None}
 
         # Create the network
-        logits = alexnet(images, norm_params, mode) 
+        logits = alexnet_alter(images, norm_params, mode) 
 
     elif FLAGS.network == 'resnet':
-        # with slim.arg_scope(resnet_v2.resnet_arg_scope()):
         logits, end_points = resnet_v2.resnet_v2_50(inputs=images, 
                 num_classes=ts._NUM_CLASSES, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
-        print ("output for resnet: {}".format(logits.shape))
+
+    elif FLAGS.network == 'alexnet':
+        logits, end_points = alexnet.alexnet_v2(inputs=images,
+                num_classes=ts._NUM_CLASSES, 
+                is_training=(mode==tf.estimator.ModeKeys.TRAIN))
 
     # Inference
     predicted_classes = tf.argmax(logits, 1)
