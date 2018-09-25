@@ -67,6 +67,13 @@ elif _CONFIGURATION == "256_ADJ":
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 156
     _INPUT_SIZE = 224
+elif _CONFIGURATION == "MNIST":
+    _FILE_PATTERN = 'mnist-%s.tfrecord'
+    _SPLITS_TO_SIZES = {'train': 60000, 'test': 10000, 'predict': 10000}
+    _IMG_SIZE = 28
+    _NUM_CHANNELS = 1
+    _NUM_CLASSES = 10
+    _INPUT_SIZE = 24
 else:
     _FILE_PATTERN = '%s'
     _SPLITS_TO_SIZES = {'train': 0, 'test': 0, 'predict': 0}
@@ -76,8 +83,8 @@ else:
     _INPUT_SIZE = 0
 
 _ITEMS_TO_DESCRIPTIONS = {
-        'image': 'A [128 x 128 x 3] RGB image.',
-        'label': 'A single integer between 0 and 914',
+        'image': 'A [_IMG_SIZE x _IMG_SIZE x _NUM_CHANNELS] RGB image.',
+        'label': 'A single integer between 0 and _NUM_CLASSES',
         }
 
 def get_split(split_name, dataset_dir, 
@@ -132,8 +139,8 @@ def get_split(split_name, dataset_dir,
 
     items_to_handlers = {
             'image': slim.tfexample_decoder.Image(
-                    shape=[height, width, n_channels]), 
-                    # channels=n_channels),
+                    shape=[height, width, n_channels], 
+                    channels=n_channels),
             'label': slim.tfexample_decoder.Tensor(
                     'image/class/label', shape=[]),
             'filename': slim.tfexample_decoder.Tensor(

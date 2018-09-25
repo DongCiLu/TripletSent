@@ -53,7 +53,7 @@ def data_augmentation(image):
     '''
     # random crop images
     image = tf.random_crop(
-            image, [ts._INPUT_SIZE, ts._INPUT_SIZE, 3])
+            image, [ts._INPUT_SIZE, ts._INPUT_SIZE, ts._NUM_CHANNELS])
 
     return image
 
@@ -93,7 +93,6 @@ def provide_data(split_name, batch_size,
         image = data_augmentation(image)
     else: # 'predict' or 'test'
         print("central crop testing data")
-        # image = tf.image.central_crop(image, _CROP_RATIO)
         image = tf.image.resize_image_with_crop_or_pad(
                 image, ts._INPUT_SIZE, ts._INPUT_SIZE)
 
