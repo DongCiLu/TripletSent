@@ -14,10 +14,13 @@ for ANP in label_file:
     ANP_dirname = segs[0] + '_' + segs[1]
 
     print("Downloading images for keyword {}".format(ANP_keyword))
-    response = google_images_download.googleimagesdownload()
-    response.download({"keywords": ANP_keyword,
+    try:
+        response = google_images_download.googleimagesdownload()
+        response.download({"keywords": ANP_keyword,
                        "limit": images_per_class,
                        "chromedriver": "/usr/lib/chromium-browser/chromedriver",
                        "format": "jpg",
                        "output_directory": dest_dir,
                        "image_directory": ANP_dirname})
+    except:
+        print("Failed to download for keyword {}".format(ANP_keyword))
