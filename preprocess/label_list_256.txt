@@ -1,3 +1,16 @@
+abandoned_asylum
+abandoned_building
+abandoned_cemetery
+abandoned_decay
+abandoned_factory
+abandoned_hospitals
+abandoned_house
+abandoned_industry
+abandoned_office
+abandoned_places
+abandoned_school
+abandoned_ship
+abandoned_train
 adorable_baby
 adorable_dog
 adorable_kitty

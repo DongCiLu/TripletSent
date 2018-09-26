@@ -5,7 +5,7 @@ import sys
 from google_images_download import google_images_download
 
 dest_dir = "../datasets/google"
-label_file = open("label_list_256.txt", 'r')
+label_file = open("label_list_256_split.txt", 'r')
 images_per_class = 400
 
 for ANP in label_file:
