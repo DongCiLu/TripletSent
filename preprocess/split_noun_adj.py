@@ -3,6 +3,7 @@ import os
 import numpy as np
 from shutil import copyfile
 
+'''
 train_src_dir = "../datasets/sentibank_flickr/regular_256/train"
 test_src_dir = "../datasets/sentibank_flickr/regular_256/test"
 
@@ -11,6 +12,15 @@ test_noun_base_dir = "../datasets/sentibank_flickr/regular_256/test_noun"
 
 train_adj_base_dir = "../datasets/sentibank_flickr/regular_256/train_adj"
 test_adj_base_dir = "../datasets/sentibank_flickr/regular_256/test_adj"
+'''
+train_src_dir = "../datasets/google/regular/train"
+test_src_dir = "../datasets/google/regular/test"
+
+train_noun_base_dir = "../datasets/google/regular/train_noun"
+test_noun_base_dir = "../datasets/google/regular/test_noun"
+
+train_adj_base_dir = "../datasets/google/regular/train_adj"
+test_adj_base_dir = "../datasets/google/regular/test_adj"
 
 for subdir, dirs, files in os.walk(train_src_dir):
     if subdir == train_src_dir:
