@@ -83,14 +83,14 @@ elif _CONFIGURATION == "GOOGLE_NORMAL":
     _INPUT_SIZE = 224
 elif _CONFIGURATION == "GOOGLE_NOUN":
     _FILE_PATTERN = 'ts-%s_noun.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 283363, 'test': 120813, 'predict': 120813}
+    _SPLITS_TO_SIZES = {'train': 215975, 'test': 93008, 'predict': 93008}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 269
     _INPUT_SIZE = 224
 elif _CONFIGURATION == "GOOGLE_ADJ":
     _FILE_PATTERN = 'ts-%s_adj.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 283356, 'test': 120812, 'predict': 120812}
+    _SPLITS_TO_SIZES = {'train': 215975, 'test': 93008, 'predict': 93008}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 156

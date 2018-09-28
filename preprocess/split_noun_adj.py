@@ -42,8 +42,9 @@ for subdir, dirs, files in os.walk(train_src_dir):
     # split files
     for f in files:
         src_fp = os.path.join(subdir, f)
-        noun_dst_fp = os.path.join(train_noun_dir, f)
-        adj_dst_fp = os.path.join(train_adj_dir, f)
+        new_fn = ANP + f
+        noun_dst_fp = os.path.join(train_noun_dir, new_fn)
+        adj_dst_fp = os.path.join(train_adj_dir, new_fn)
         copyfile(src_fp, noun_dst_fp)
         copyfile(src_fp, adj_dst_fp)
 
@@ -67,7 +68,8 @@ for subdir, dirs, files in os.walk(test_src_dir):
     # split files
     for f in files:
         src_fp = os.path.join(subdir, f)
-        noun_dst_fp = os.path.join(test_noun_dir, f)
-        adj_dst_fp = os.path.join(test_adj_dir, f)
+        new_fn = ANP + f
+        noun_dst_fp = os.path.join(test_noun_dir, new_fn)
+        adj_dst_fp = os.path.join(test_adj_dir, new_fn)
         copyfile(src_fp, noun_dst_fp)
         copyfile(src_fp, adj_dst_fp)

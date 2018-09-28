@@ -163,7 +163,7 @@ def cnn_model(features, labels, mode):
     onehot_labels = labels
     axillary_labels = features['axillary_labels']
 
-    if FLAGS.network == 'alexnet_alter':
+    if FLAGS.network == 'alexnet':
         # Format data
         if FLAGS.data_format == 'NCHW':
             print("Converting data format to channels first (NCHW)")
@@ -183,11 +183,6 @@ def cnn_model(features, labels, mode):
 
     elif FLAGS.network == 'resnet':
         logits, end_points = resnet_v2.resnet_v2_50(inputs=images, 
-                num_classes=ts._NUM_CLASSES, 
-                is_training=(mode==tf.estimator.ModeKeys.TRAIN))
-
-    elif FLAGS.network == 'alexnet':
-        logits, end_points = alexnet.alexnet_v2(inputs=images,
                 num_classes=ts._NUM_CLASSES, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
 
