@@ -30,7 +30,7 @@ from datasets import dataset_utils
 
 slim = tf.contrib.slim
 
-_CONFIGURATION = "GOOGLE_NORMAL"
+_CONFIGURATION = "GOOGLE_NORMAL_FILTERED"
 
 if _CONFIGURATION == "FLICKR_128_NORMAL":
     _FILE_PATTERN = 'ts-%s.tfrecord'
@@ -94,6 +94,27 @@ elif _CONFIGURATION == "GOOGLE_ADJ":
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 156
+    _INPUT_SIZE = 224
+elif _CONFIGURATION == "GOOGLE_NORMAL_FILTERED":
+    _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
+    _SPLITS_TO_SIZES = {'train': 79951, 'test': 34077, 'predict': 34077}
+    _IMG_SIZE = 256
+    _NUM_CHANNELS = 3
+    _NUM_CLASSES = 351
+    _INPUT_SIZE = 224
+elif _CONFIGURATION == "GOOGLE_NOUN_FILTERED":
+    _FILE_PATTERN = 'ts-%s_noun.tfrecord'
+    _SPLITS_TO_SIZES = {'train': 79951, 'test': 34077, 'predict': 34077}
+    _IMG_SIZE = 256
+    _NUM_CHANNELS = 3
+    _NUM_CLASSES = 81
+    _INPUT_SIZE = 224
+elif _CONFIGURATION == "GOOGLE_ADJ_FILTERED":
+    _FILE_PATTERN = 'ts-%s_adj.tfrecord'
+    _SPLITS_TO_SIZES = {'train': 79951, 'test': 34077, 'predict': 34077}
+    _IMG_SIZE = 256
+    _NUM_CHANNELS = 3
+    _NUM_CLASSES = 110
     _INPUT_SIZE = 224
 else:
     _FILE_PATTERN = '%s'
