@@ -2,7 +2,8 @@
 
 import os
 
-dataset_dir = "../datasets/sentibank_flickr/preprocessed_256"
+# dataset_dir = "../datasets/sentibank_flickr/preprocessed_256"
+dataset_dir = "../datasets/google/preprocessed"
 outlist = open("label_list.txt", 'w')
 
 buffer_list = []
