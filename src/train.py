@@ -37,7 +37,6 @@ from tensorflow.python import debug as tf_debug
 from tensorflow.python.framework import ops
 import slim
 from slim.nets import resnet_v2
-from slim.nets import alexnet
 
 import ts
 import data_provider
@@ -106,7 +105,7 @@ def input_fn(split_name):
                 'axillary_labels': axillary_labels}
     return features, onehot_labels 
 
-def alexnet_alter(images, norm_params, mode):
+def alexnet(images, norm_params, mode):
     with tf.contrib.framework.arg_scope(
             [layers.conv2d, layers.fully_connected],
             activation_fn=tf.nn.leaky_relu,
@@ -179,7 +178,7 @@ def cnn_model(features, labels, mode):
                     'updates_collections': None}
 
         # Create the network
-        logits = alexnet_alter(images, norm_params, mode) 
+        logits = alexnet(images, norm_params, mode) 
 
     elif FLAGS.network == 'resnet':
         logits, end_points = resnet_v2.resnet_v2_50(inputs=images, 
