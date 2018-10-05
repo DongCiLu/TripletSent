@@ -13,7 +13,6 @@ total_cnt = 0
 existing_img = {}
 duplicate_img = {}
 for subdir, dirs, files in os.walk(src_dir):
-    print subdir
     for f in files:
         total_cnt += 1
         src_fp = os.path.join(subdir, f)

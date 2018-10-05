@@ -36,8 +36,8 @@ for subdir, dirs, files in os.walk(src_dir):
         total_cnt += 1
         src_fp = os.path.join(subdir, f)
         r = np.random.uniform()
-        if r < 0.7:
-        # if r < 0.7 or test_cnt >= hard_cap:
+        if r < split_ratio:
+        # if r < split_ratio or test_cnt >= hard_cap:
             dst_fp = os.path.join(train_dir, f)
             train_cnt += 1
         else:

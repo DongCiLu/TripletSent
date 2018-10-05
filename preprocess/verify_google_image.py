@@ -4,8 +4,8 @@ import re
 import sys
 from shutil import copyfile
 
-dataset_dir = "../datasets/google"
-images_per_class = 400
+dataset_dir = "../datasets/google/preprocessed"
+images_per_class = 100
 
 dir_cnt = 0
 fail_cnt = 0

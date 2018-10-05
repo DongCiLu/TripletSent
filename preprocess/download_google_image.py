@@ -4,7 +4,7 @@ import re
 import sys
 from google_images_download import google_images_download
 
-dest_dir = "../datasets/google"
+dest_dir = "../datasets/google/comp2"
 label_file = open("label_list_256_split.txt", 'r')
 images_per_class = 400
 
@@ -19,7 +19,7 @@ for ANP in label_file:
         response.download({"keywords": ANP_keyword,
                        "limit": images_per_class,
                        "chromedriver": "/usr/lib/chromium-browser/chromedriver",
-                       "format": "jpg",
+                       # "format": "jpg",
                        "output_directory": dest_dir,
                        "image_directory": ANP_dirname})
     except:
