@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 
+import os
 import math
 import tensorflow as tf
 
@@ -31,13 +32,14 @@ _LEN_LIMIT = 1 - 2.0 * (ts._IMG_SIZE - ts._INPUT_SIZE) / ts._IMG_SIZE
 slim = tf.contrib.slim
 
 def data_augmentation(image):
+    batch_size = image.shape[0]
     # flip image
     image = tf.image.random_flip_left_right(image)
     # rotate small angles
-    rotate_degree = tf.random_uniform(
-            [], -_DA_ROTATE_LIMIT, _DA_ROTATE_LIMIT)
-    image = tf.contrib.image.rotate(
-            image, rotate_degree * math.pi / 180, 'BILINEAR')
+    # rotate_degree = tf.random_uniform(
+             # [], -_DA_ROTATE_LIMIT, _DA_ROTATE_LIMIT)
+    # image = tf.contrib.image.rotate(
+            # image, rotate_degree * math.pi / 180, 'BILINEAR')
     '''
     # zoom in or out images
     l = tf.random_uniform([], _LEN_LIMIT, 1)
@@ -52,10 +54,51 @@ def data_augmentation(image):
     image = tf.squeeze(image)
     '''
     # random crop images
-    image = tf.random_crop(
-            image, [ts._INPUT_SIZE, ts._INPUT_SIZE, ts._NUM_CHANNELS])
+    image = tf.random_crop(image, 
+            # [ts._INPUT_SIZE, ts._INPUT_SIZE, ts._NUM_CHANNELS])
+            [batch_size, ts._INPUT_SIZE, ts._INPUT_SIZE, ts._NUM_CHANNELS])
 
     return image
+
+def read_whole_dataset(split_name, dataset_dir):
+    file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
+    dataset = tf.data.TFRecordDataset(file_pattern)
+    dataset = dataset.map(ts.parse_example)
+
+    # make whole dataset as a single batch
+    dataset_size = ts._SPLITS_TO_SIZES[split_name]
+    dataset = dataset.batch(dataset_size)
+    whole_dataset_tensors = tf.contrib.data.get_single_element(dataset)
+
+    '''
+    th tf.Session() as sess:
+        whole_dataset_arrays = sess.run(whole_dataset_tensors)
+
+    return whole_dataset_arrays
+    '''
+    return whole_dataset_tensors
+
+def provide_triplet_data(source):
+    ''' 
+    Arrange data into batches that each batch contains multiple class examples
+
+    Args:
+      source: data structure that holds all the training data
+
+    Returns:
+      images: A `Tensor` of size [batch_size, 256, 256, 1]
+      one_hot_labels: A `Tensor` of size [batch_size, mnist.NUM_CLASSES], where
+        each row has a single element set to one and the rest set to zeros.
+      num_samples: The number of total samples in the dataset.
+    '''
+
+    images = source[0]
+    labels = source[1]
+    filenames = source[2]
+
+    one_hot_labels = tf.one_hot(labels, dataset.num_classes)
+    return images, one_hot_labels, filenames, \
+            labels, dataset.num_samples
 
 def provide_data(split_name, batch_size, 
         dataset_dir, num_readers=1, num_threads=1):
@@ -87,6 +130,7 @@ def provide_data(split_name, batch_size,
     [image, label, filename] = \
             provider.get(['image', 'label', 'filename'])
 
+    '''
     # Data augmentation.
     if split_name == 'train':
         print("enable data augmentation")
@@ -98,6 +142,7 @@ def provide_data(split_name, batch_size,
 
     # Change the images to [-1.0, 1.0).
     image = (tf.to_float(image) - 128.0) / 128.0
+    '''
 
     # Creates a QueueRunner for the pre-fetching operation.
     images, labels, filenames = tf.train.batch(
@@ -107,10 +152,6 @@ def provide_data(split_name, batch_size,
             capacity=5 * batch_size)
 
     one_hot_labels = tf.one_hot(labels, dataset.num_classes)
-    print ("celegans data loading stat:")
-    print ("image dimension: {}".format(images.shape))
-    print ("label dimension: {}".format(one_hot_labels.shape))
-    print ("number of samples: {}".format(dataset.num_samples))
     return images, one_hot_labels, filenames, \
             labels, dataset.num_samples
 

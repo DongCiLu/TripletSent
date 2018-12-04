@@ -29,24 +29,37 @@ import data_provider
 
 
 class DataProviderTest(tf.test.TestCase):
-    def test_celegans_data_reading(self):
+    def test_ts_data_reading(self):
         split_name = 'train'
-        batch_size = 10 
-        dataset_dir = "datasets/sentibank_flickr/regular_256/tfrecord"
+        # batch_size = 10 
+        # dataset_dir = "datasets/sentibank_flickr/regular_256/tfrecord"
+        dataset_dir = "datasets/google/regular/tfrecord"
         print (time.time())
         tf.set_random_seed(time.time())
+        '''
         images, oh_labels, filenames, ax_labels, num_samples = \
                 data_provider.provide_data(
                 split_name, batch_size, dataset_dir, 
                 num_readers = 1, num_threads = 1)
-
         '''
+        whole_dataset_tensors = data_provider.read_whole_dataset(
+                split_name, dataset_dir)
+
         with self.test_session() as sess:
             with tf.contrib.slim.queues.QueueRunners(sess):
+                whole_dataset_arrays = sess.run(whole_dataset_tensors)
+                print("whole dataset reading test: ",  
+                        whole_dataset_arrays[0].shape, 
+                        whole_dataset_arrays[1].shape, 
+                        whole_dataset_arrays[2].shape)
+                # print(whole_dataset_arrays[0])
+                print(whole_dataset_arrays[1])
+                print(whole_dataset_arrays[2])
+                '''
                 images, oh_labels, filenames, ax_labels = \
                         sess.run([images, oh_labels, filenames, ax_labels])
                 print (images)
-        '''
+                '''
 
 if __name__ == '__main__':
     tf.test.main()

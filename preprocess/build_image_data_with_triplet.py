@@ -366,7 +366,9 @@ def _find_image_files(data_dir, labels_file):
       labels_file, 'r').readlines()]
 
   labels = []
-  filenames = []
+  filenames1 = []
+  filenames2 = []
+  filenames3 = []
   texts = []
 
   # Leave label index 0 empty as a background class. NOTE: we dont have the background class.
@@ -380,7 +382,9 @@ def _find_image_files(data_dir, labels_file):
 
     labels.extend([label_index] * len(matching_files))
     texts.extend([text] * len(matching_files))
-    filenames.extend(matching_files)
+    filenames1.extend(matching_files)
+    filenames2.extend(matching_files)
+    filenames3.extend(matching_files)
 
     if not label_index % 100:
       print('Finished finding files in %d of %d classes.' % (

@@ -30,7 +30,7 @@ from datasets import dataset_utils
 
 slim = tf.contrib.slim
 
-_CONFIGURATION = "GOOGLE_ADJ_FILTERED2"
+_CONFIGURATION = "GOOGLE_NORMAL"
 
 if _CONFIGURATION == "FLICKR_128_NORMAL":
     _FILE_PATTERN = 'ts-%s.tfrecord'
@@ -67,70 +67,21 @@ elif _CONFIGURATION == "FLICKR_ADJ":
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 156
     _INPUT_SIZE = 224
-elif _CONFIGURATION == "MNIST":
-    _FILE_PATTERN = 'mnist-%s.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 60000, 'test': 10000, 'predict': 10000}
-    _IMG_SIZE = 28
-    _NUM_CHANNELS = 1
-    _NUM_CLASSES = 10
-    _INPUT_SIZE = 24
 elif _CONFIGURATION == "GOOGLE_NORMAL":
-    _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
-    _SPLITS_TO_SIZES = {'train': 215975, 'test': 93008, 'predict': 93008}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 910
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_NOUN":
-    _FILE_PATTERN = 'ts-%s_noun.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 215975, 'test': 93008, 'predict': 93008}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 269
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_ADJ":
-    _FILE_PATTERN = 'ts-%s_adj.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 215975, 'test': 93008, 'predict': 93008}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 156
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_NORMAL_FILTERED1":
-    _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
-    _SPLITS_TO_SIZES = {'train': 79951, 'test': 34077, 'predict': 34077}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 351
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_NOUN_FILTERED1":
-    _FILE_PATTERN = 'ts-%s_noun.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 79951, 'test': 34077, 'predict': 34077}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 81
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_ADJ_FILTERED1":
-    _FILE_PATTERN = 'ts-%s_adj.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 79951, 'test': 34077, 'predict': 34077}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 110
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_NORMAL_FILTERED2":
     _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
     _SPLITS_TO_SIZES = {'train': 46726, 'test': 19765, 'predict': 19765}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 268
     _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_NOUN_FILTERED2":
+elif _CONFIGURATION == "GOOGLE_NOUN":
     _FILE_PATTERN = 'ts-%s_noun.tfrecord'
     _SPLITS_TO_SIZES = {'train': 46726, 'test': 19765, 'predict': 19765}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 77
     _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_ADJ_FILTERED2":
+elif _CONFIGURATION == "GOOGLE_ADJ":
     _FILE_PATTERN = 'ts-%s_adj.tfrecord'
     _SPLITS_TO_SIZES = {'train': 46726, 'test': 19765, 'predict': 19765}
     _IMG_SIZE = 256
@@ -149,6 +100,25 @@ _ITEMS_TO_DESCRIPTIONS = {
         'image': 'A [_IMG_SIZE x _IMG_SIZE x _NUM_CHANNELS] RGB image.',
         'label': 'A single integer between 0 and _NUM_CLASSES',
         }
+
+def parse_example(example):
+    keys_to_features = {
+            'image/encoded': 
+                tf.FixedLenFeature((), tf.string, default_value=''),
+            'image/format': 
+                tf.FixedLenFeature((), tf.string, default_value='raw'),
+            'image/class/label': 
+                tf.FixedLenFeature([1], tf.int64, 
+                default_value=tf.zeros([1], dtype=tf.int64)),
+            'image/filename': 
+                tf.FixedLenFeature((), tf.string, 
+                default_value='no_filename'),
+            }
+    parsed_features = tf.parse_single_example(example, keys_to_features)
+    image = tf.image.decode_image(parsed_features['image/encoded'], 3)
+    label = tf.cast(parsed_features['image/class/label'], tf.int32)
+    filename = parsed_features['image/filename']
+    return image, label, filename
 
 def get_split(split_name, dataset_dir, 
         file_pattern=None, reader=None):

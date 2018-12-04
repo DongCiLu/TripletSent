@@ -38,8 +38,8 @@ set -e
 
 # define run mode
 run_mode=$1
-if ! [[ "$run_mode" =~ ^(test|training|custom_training|custom_evaluation|visualization) ]]; then
-    echo "'run_mode' mus t be one of: 'test', 'training', 'custom_training', 'custom_evaluation', 'visualization'."
+if ! [[ "$run_mode" =~ ^(test|training|triplet_training|custom_training|custom_evaluation|visualization) ]]; then
+    echo "'run_mode' mus t be one of: 'test', 'training', 'triplet_training', 'custom_training', 'custom_evaluation', 'visualization'."
     exit
 fi
 
@@ -104,6 +104,19 @@ if [[ "$run_mode" == "training" ]]; then
     python "${src_dir}/train.py" \
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
+        --mode="training" \
+        --network="resnet" \
+        --optimizer="Adam" \
+        --num_epochs=${NUM_EPOCHS} \
+        --alsologtostderr
+fi
+
+# Run triplet training.
+if [[ "$run_mode" == "triplet_training" ]]; then
+    python "${src_dir}/train.py" \
+        --train_log_dir=${TRAIN_DIR} \
+        --dataset_dir=${DATASET_DIR} \
+        --data_source="nparray" \
         --mode="training" \
         --network="resnet" \
         --optimizer="Adam" \

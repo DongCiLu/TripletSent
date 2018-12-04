@@ -51,6 +51,9 @@ flags.DEFINE_string('train_log_dir', '/tmp/mnist/',
 
 flags.DEFINE_string('dataset_dir', None, 'Location of data.')
 
+flags.DEFINE_string('data_source', 'tfrecord', 
+        'Data source, possible value: tfrecord or nparray.')
+
 flags.DEFINE_string('mode', 'training', 
         'All modes: [training inference visualization].')
 
@@ -83,16 +86,34 @@ flags.DEFINE_string('visualization_out', 'visualization_results',
 
 FLAGS = flags.FLAGS
 
-def input_fn(split_name):
+def input_fn(split_name, source=None):
     if split_name == 'predict':
         batch_size = 1
     else:
         batch_size = FLAGS.batch_size
 
-    images, onehot_labels, filenames, axillary_labels, _ = \
-            data_provider.provide_data(split_name, 
-            batch_size, FLAGS.dataset_dir, 
-            num_readers=1, num_threads=4)
+    if FLAGS.data_source == 'nparray' and split_name == 'train':
+        images, onehot_labels, filenames, axillary_labels, _ = \
+                data_provider.provide_data(split_name, 
+                batch_size, FLAGS.dataset_dir, 
+                num_readers=1, num_threads=4)
+    else:
+        images, onehot_labels, filenames, axillary_labels, _ = \
+                data_provider.provide_data(split_name, 
+                batch_size, FLAGS.dataset_dir, 
+                num_readers=1, num_threads=4)
+
+    # Data augmentation.
+    if split_name == 'train':
+        print("enable data augmentation")
+        images = data_provider.data_augmentation(images)
+    else: # 'predict' or 'test'
+        print("central crop testing data")
+        images = tf.image.resize_image_with_crop_or_pad(
+                images, ts._INPUT_SIZE, ts._INPUT_SIZE)
+
+    # Change the images to [-1.0, 1.0).
+    images = (tf.to_float(images) - 128.0) / 128.0
 
     print("Tensor formatting check: ")
     print("image shape:{}".format(images.shape))
@@ -283,6 +304,13 @@ def main(_):
     test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
             FLAGS.batch_size)))
 
+    train_data = None
+    if FLAGS.data_source == 'nparray':
+        train_data = data_provider.read_whole_dataset(
+                'train', FLAGS.dataset_dir)
+        with tf.Session() as sess:
+            train_data = sess.run(train_data)
+
     #############Remember to change##############
     epoch_size = 500
     test_size = 10
@@ -301,7 +329,7 @@ def main(_):
 
     if FLAGS.mode == 'training':
         train_spec = tf.estimator.TrainSpec(input_fn=
-                lambda: input_fn('train'),
+                lambda: input_fn('train', train_data),
                 max_steps=(FLAGS.num_epochs * epoch_size))
         eval_spec = tf.estimator.EvalSpec(input_fn=
                 lambda: input_fn('test'),
@@ -318,21 +346,12 @@ def main(_):
 
         if FLAGS.num_epochs != 0:
             classifier.train(
-                    input_fn=lambda: input_fn('train'),
+                    input_fn=lambda: input_fn('train', train_data),
                     steps=(FLAGS.num_epochs * epoch_size))
         predictions = classifier.predict(
                 input_fn=lambda:input_fn('predict'))
         customized_evaluation(
                 predictions, noun_list, adj_list)
-
-    elif FLAGS.mode == 'visualization':
-        if not tf.gfile.Exists('{}'.format(FLAGS.visualization_out)):
-            tf.gfile.MakeDirs('{}'.format(FLAGS.visualization_out))
-        visual_input = FLAGS.visualization_in
-        for subdir, dirs, files in os.walk(FLAGS.visualization_in):
-            for f in files:
-                # leave empty
-                pass
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
