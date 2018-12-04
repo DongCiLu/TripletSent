@@ -1,5 +1,6 @@
 ssh-keygen
 ssh-copy-id lanterns2.eecs.utk.edu
+ssh-copy-id com1504.eecs.utk.edu
 sudo chmod 777 /mydata
 
 # install cuda toolkit 10.0
