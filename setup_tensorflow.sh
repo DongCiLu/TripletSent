@@ -29,7 +29,6 @@ pip install --user matplotlib
 git clone https://github.com/tensorflow/models.git
 mv ~/models ~/Tensorflow-models
 
-git clone https://github.com/DongCiLu/TripletSent.git
 mkdir /mydata/datasets
 mkdir /mydata/datasets/google
 mkdir /mydata/datasets/google/regular
