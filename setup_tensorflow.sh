@@ -1,6 +1,7 @@
 ssh-keygen
 ssh-copy-id lanterns2.eecs.utk.edu
 ssh-copy-id com1504.eecs.utk.edu
+git clone https://github.com/DongCiLu/Scripts
 sudo chmod 777 /mydata
 
 # install cuda toolkit 10.0
@@ -28,10 +29,11 @@ pip install --user pillow
 pip install --user matplotlib
 
 git clone https://github.com/tensorflow/models.git
-mv ~/models ~/Tensorflow-models
+mv ./models ./Tensorflow-models
 
+cd /mydata
 mkdir /mydata/datasets
 mkdir /mydata/datasets/google
 mkdir /mydata/datasets/google/regular
-scp -r com1504.eecs.utk.edu:~/TripletSent/datasets/google/regular/tfrecord /mydata/datasets/google/regular/
-ln -s /mydata/datasets ~/TripletSent/datasets
+scp -r com1504.eecs.utk.edu:./TripletSent/datasets/google/regular/tfrecord /mydata/datasets/google/regular/
+ln -s /mydata/datasets /mydata/TripletSent/datasets
