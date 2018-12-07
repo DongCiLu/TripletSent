@@ -60,25 +60,7 @@ def data_augmentation(image):
 
     return image
 
-def read_whole_dataset(split_name, dataset_dir):
-    file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
-    dataset = tf.data.TFRecordDataset(file_pattern)
-    dataset = dataset.map(ts.parse_example)
-
-    # make whole dataset as a single batch
-    dataset_size = ts._SPLITS_TO_SIZES[split_name]
-    dataset = dataset.batch(dataset_size)
-    whole_dataset_tensors = tf.contrib.data.get_single_element(dataset)
-
-    '''
-    th tf.Session() as sess:
-        whole_dataset_arrays = sess.run(whole_dataset_tensors)
-
-    return whole_dataset_arrays
-    '''
-    return whole_dataset_tensors
-
-def provide_triplet_data(source):
+def provide_triplet_data(split_name, batch_size, dataset_dir):
     ''' 
     Arrange data into batches that each batch contains multiple class examples
 
@@ -92,13 +74,41 @@ def provide_triplet_data(source):
       num_samples: The number of total samples in the dataset.
     '''
 
-    images = source[0]
-    labels = source[1]
-    filenames = source[2]
+    file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
+    dataset = tf.data.TFRecordDataset(file_pattern)
+    dataset = dataset.map(ts.parse_example)
+    dataset_size = ts._SPLITS_TO_SIZES[split_name]
+    # dataset = dataset.shuffle(dataset_size)
+    dataset = dataset.shuffle(1000)
+    dataset1 = dataset.filter(lambda image, label, filename: 
+            tf.reshape(tf.equal(tf.unstack(label)[0], 177), []))
+    dataset2 = dataset.filter(lambda image, label, filename: 
+            tf.reshape(tf.equal(tf.unstack(label)[0], 99), []))
 
-    one_hot_labels = tf.one_hot(labels, dataset.num_classes)
-    return images, one_hot_labels, filenames, \
-            labels, dataset.num_samples
+    datasets = [dataset1, dataset2]
+
+    '''
+    dataset = tf.data.Dataset.zip((dataset1, dataset2)).flat_map(
+            lambda x0, x1: tf.data.Dataset.from_tensors(x0).concatenate(
+                tf.data.Dataset.from_tensors(x1)))
+    # dataset = tf.data.Dataset.range(2).interleave(
+            # lambda x: datasets[x], 
+            # cycle_length=2, block_length=1) 
+            # num_parallel_calls=None)
+    '''
+    choice_dataset = tf.data.Dataset.range(2).repeat()
+    dataset = tf.data.experimental.choose_from_datasets(
+            datasets, choice_dataset)
+
+    dataset = dataset.batch(batch_size) # may need to discard tail
+    iterator = dataset.make_one_shot_iterator()
+    next_element = iterator.get_next()
+
+    images, labels, filenames = \
+            next_element[0], next_element[1], next_element[2]
+    one_hot_labels = tf.one_hot(labels, ts._NUM_CLASSES)
+
+    return images, one_hot_labels, filenames, labels
 
 def provide_data(split_name, batch_size, 
         dataset_dir, num_readers=1, num_threads=1):
@@ -152,8 +162,7 @@ def provide_data(split_name, batch_size,
             capacity=5 * batch_size)
 
     one_hot_labels = tf.one_hot(labels, dataset.num_classes)
-    return images, one_hot_labels, filenames, \
-            labels, dataset.num_samples
+    return images, one_hot_labels, filenames, labels
 
 def float_image_to_uint8(image):
     """Convert float image in [-1, 1) to [0, 255] uint8.

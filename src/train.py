@@ -57,6 +57,9 @@ flags.DEFINE_string('data_source', 'tfrecord',
 flags.DEFINE_string('mode', 'training', 
         'All modes: [training inference visualization].')
 
+flags.DEFINE_string('train_mode', 'regular', 
+        'Training mode, possible value: regular or triplet.')
+
 flags.DEFINE_string('network', 'resnet', 
         'Which network to use: alexnet or resnet.')
 
@@ -92,13 +95,12 @@ def input_fn(split_name, source=None):
     else:
         batch_size = FLAGS.batch_size
 
-    if FLAGS.data_source == 'nparray' and split_name == 'train':
-        images, onehot_labels, filenames, axillary_labels, _ = \
-                data_provider.provide_data(split_name, 
-                batch_size, FLAGS.dataset_dir, 
-                num_readers=1, num_threads=4)
+    if FLAGS.train_mode == 'triplet' and split_name == 'train':
+        images, onehot_labels, filenames, axillary_labels = \
+                data_provider.provide_triplet_data(split_name, 
+                batch_size, FLAGS.dataset_dir)
     else:
-        images, onehot_labels, filenames, axillary_labels, _ = \
+        images, onehot_labels, filenames, axillary_labels = \
                 data_provider.provide_data(split_name, 
                 batch_size, FLAGS.dataset_dir, 
                 num_readers=1, num_threads=4)
@@ -304,13 +306,6 @@ def main(_):
     test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
             FLAGS.batch_size)))
 
-    train_data = None
-    if FLAGS.data_source == 'nparray':
-        train_data = data_provider.read_whole_dataset(
-                'train', FLAGS.dataset_dir)
-        with tf.Session() as sess:
-            train_data = sess.run(train_data)
-
     #############Remember to change##############
     epoch_size = 500
     test_size = 10
@@ -329,7 +324,7 @@ def main(_):
 
     if FLAGS.mode == 'training':
         train_spec = tf.estimator.TrainSpec(input_fn=
-                lambda: input_fn('train', train_data),
+                lambda: input_fn('train'),
                 max_steps=(FLAGS.num_epochs * epoch_size))
         eval_spec = tf.estimator.EvalSpec(input_fn=
                 lambda: input_fn('test'),
@@ -346,7 +341,7 @@ def main(_):
 
         if FLAGS.num_epochs != 0:
             classifier.train(
-                    input_fn=lambda: input_fn('train', train_data),
+                    input_fn=lambda: input_fn('train'),
                     steps=(FLAGS.num_epochs * epoch_size))
         predictions = classifier.predict(
                 input_fn=lambda:input_fn('predict'))

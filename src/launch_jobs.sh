@@ -63,6 +63,7 @@ if [[ "$gpu_unit" == "" ]]; then
 fi
 
 export CUDA_VISIBLE_DEVICES=$gpu_unit
+PYTHON="python"
 
 # Location of the git repository.
 git_repo="../Tensorflow-models"
@@ -96,16 +97,16 @@ Banner "Starting ${run_mode} for ${NUM_EPOCHS} epochs..."
 
 # Run temporary tests.
 if [[ "$run_mode" == "test" ]]; then
-    python "${src_dir}/data_provider_test.py" 
+    ${PYTHON} "${src_dir}/data_provider_test.py" 
 fi
 
 # Run training.
 if [[ "$run_mode" == "training" ]]; then
-    python "${src_dir}/train.py" \
+    ${PYTHON} "${src_dir}/train.py" \
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
         --mode="training" \
-        --network="resnet" \
+        --network="alexnet" \
         --optimizer="Adam" \
         --num_epochs=${NUM_EPOCHS} \
         --alsologtostderr
@@ -113,12 +114,12 @@ fi
 
 # Run triplet training.
 if [[ "$run_mode" == "triplet_training" ]]; then
-    python "${src_dir}/train.py" \
+    ${PYTHON} "${src_dir}/train.py" \
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
-        --data_source="nparray" \
         --mode="training" \
-        --network="resnet" \
+        --train_mode="triplet" \
+        --network="alexnet" \
         --optimizer="Adam" \
         --num_epochs=${NUM_EPOCHS} \
         --alsologtostderr
@@ -129,7 +130,7 @@ if [[ "$run_mode" == "custom_training" ]]; then
     NUM_PREDICTIONS=121738
     for (( i=1; i<=$NUM_EPOCHS; i++ ))
     do
-        python "${src_dir}/train.py" \
+        ${PYTHON} "${src_dir}/train.py" \
             --train_log_dir=${TRAIN_DIR} \
             --dataset_dir=${DATASET_DIR} \
             --mode="custom_training" \
@@ -142,7 +143,7 @@ fi
 # Run customized evaluation
 if [[ "$run_mode" == "custom_evaluation" ]]; then
     NUM_PREDICTIONS=121738
-    python "${src_dir}/train.py" \
+    ${PYTHON} "${src_dir}/train.py" \
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
         --mode="custom_training" \
@@ -153,7 +154,7 @@ fi
 
 # Run visualization
 if [[ "$run_mode" == "visualization" ]]; then
-    python "${src_dir}/train.py" \
+    ${PYTHON} "${src_dir}/train.py" \
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
         --mode="visualization" \
