@@ -114,8 +114,24 @@ def parse_example(example):
                 tf.FixedLenFeature((), tf.string, 
                 default_value='no_filename'),
             }
+    width = _IMG_SIZE
+    height = _IMG_SIZE
+    n_channels = _NUM_CHANNELS
+    '''
+    items_to_handlers = {
+            'image': slim.tfexample_decoder.Image(
+                    shape=[height, width, n_channels], 
+                    channels=n_channels),
+            'label': slim.tfexample_decoder.Tensor(
+                    'image/class/label', shape=[]),
+            'filename': slim.tfexample_decoder.Tensor(
+                    'image/filename'),
+            }
+    '''
     parsed_features = tf.parse_single_example(example, keys_to_features)
-    image = tf.image.decode_image(parsed_features['image/encoded'], 3)
+    # image = tf.image.decode_image(parsed_features['image/encoded'], 3)
+    image = tf.image.decode_jpeg(parsed_features['image/encoded'], n_channels)
+    image = tf.image.resize_images(image, [width, height])
     label = tf.cast(parsed_features['image/class/label'], tf.int32)
     filename = parsed_features['image/filename']
     return image, label, filename

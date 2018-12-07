@@ -78,8 +78,8 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
     dataset = tf.data.TFRecordDataset(file_pattern)
     dataset = dataset.map(ts.parse_example)
     dataset_size = ts._SPLITS_TO_SIZES[split_name]
-    # dataset = dataset.shuffle(dataset_size)
-    dataset = dataset.shuffle(1000)
+    dataset = dataset.shuffle(dataset_size)
+    # dataset = dataset.shuffle(1000)
     dataset1 = dataset.filter(lambda image, label, filename: 
             tf.reshape(tf.equal(tf.unstack(label)[0], 177), []))
     dataset2 = dataset.filter(lambda image, label, filename: 
@@ -100,12 +100,15 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
     dataset = tf.data.experimental.choose_from_datasets(
             datasets, choice_dataset)
 
-    dataset = dataset.batch(batch_size) # may need to discard tail
+    dataset = dataset.batch(batch_size, True) # discard tail
     iterator = dataset.make_one_shot_iterator()
     next_element = iterator.get_next()
+    print("**********************{}".format(next_element))
 
     images, labels, filenames = \
             next_element[0], next_element[1], next_element[2]
+    labels = tf.squeeze(labels)
+
     one_hot_labels = tf.one_hot(labels, ts._NUM_CLASSES)
 
     return images, one_hot_labels, filenames, labels
