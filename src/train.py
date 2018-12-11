@@ -40,6 +40,7 @@ from slim.nets import resnet_v2
 
 import ts
 import data_provider
+import triplet_loss
 
 flags = tf.flags
 
@@ -62,6 +63,12 @@ flags.DEFINE_string('train_mode', 'regular',
 
 flags.DEFINE_string('network', 'resnet', 
         'Which network to use: alexnet or resnet.')
+
+flags.DEFINE_string('triplet_mining_method', 'batchall', 
+        'Which triplet mining method to use: batchall or batchhard.')
+
+flags.DEFINE_float('triplet_margin', 0.2, 
+        'Value of margin used for triplet loss.')
 
 flags.DEFINE_float('lr', 1e-3, 
         'Learning rate for the network.')
@@ -96,9 +103,13 @@ def input_fn(split_name, source=None):
         batch_size = FLAGS.batch_size
 
     if FLAGS.train_mode == 'triplet' and split_name == 'train':
+        # images, onehot_labels, filenames, axillary_labels = \
+                # data_provider.provide_triplet_data(split_name, 
+                # batch_size, FLAGS.dataset_dir)
         images, onehot_labels, filenames, axillary_labels = \
-                data_provider.provide_triplet_data(split_name, 
-                batch_size, FLAGS.dataset_dir)
+                data_provider.provide_data(split_name, 
+                batch_size, FLAGS.dataset_dir, 
+                num_readers=1, num_threads=4)
     else:
         images, onehot_labels, filenames, axillary_labels = \
                 data_provider.provide_data(split_name, 
@@ -221,8 +232,23 @@ def cnn_model(features, labels, mode):
 
     # Training 
     groundtruth_classes = tf.argmax(onehot_labels, 1)
-    loss = tf.losses.softmax_cross_entropy(
-            onehot_labels=onehot_labels, logits=logits)
+    if FLAGS.train_mode == "triplet":
+        if FLAGS.triplet_mining_method == "batchall":
+            loss, fraction_positive_triplets, num_valid_triplets = \
+                    triplet_loss.batch_all_triplet_loss(
+                    axillary_labels, logits, FLAGS.triplet_margin)
+        elif FLAGS.triplet_mining_method == "batchhard":
+            loss = triplet_loss.batch_hard_triplet_loss(
+                    axillary_labels, logits, FLAGS.triplet_margin)
+        else:
+            "ERROR: Wrong Triplet loss mining method, using softmax"
+            loss = tf.losses.softmax_cross_entropy(
+                    onehot_labels=onehot_labels, logits=logits)
+    else:
+        loss = tf.losses.softmax_cross_entropy(
+                onehot_labels=onehot_labels, logits=logits)
+    print("--------{}".format(loss))
+
     if mode == tf.estimator.ModeKeys.TRAIN:
         if FLAGS.optimizer == 'GD':
             decay_factor = 0.96

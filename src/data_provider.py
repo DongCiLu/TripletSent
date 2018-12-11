@@ -77,9 +77,12 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
     file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
     dataset = tf.data.TFRecordDataset(file_pattern)
     dataset = dataset.map(ts.parse_example)
-    dataset_size = ts._SPLITS_TO_SIZES[split_name]
-    dataset = dataset.shuffle(dataset_size)
-    # dataset = dataset.shuffle(1000)
+    datasets = []
+    for i in range(100, 200):
+        datasets.append(dataset.filter(lambda image, label, filename: 
+            tf.reshape(tf.equal(tf.unstack(label)[0], 177), [])))
+
+    '''
     dataset1 = dataset.filter(lambda image, label, filename: 
             tf.reshape(tf.equal(tf.unstack(label)[0], 177), []))
     dataset2 = dataset.filter(lambda image, label, filename: 
@@ -87,7 +90,6 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
 
     datasets = [dataset1, dataset2]
 
-    '''
     dataset = tf.data.Dataset.zip((dataset1, dataset2)).flat_map(
             lambda x0, x1: tf.data.Dataset.from_tensors(x0).concatenate(
                 tf.data.Dataset.from_tensors(x1)))
@@ -96,14 +98,15 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
             # cycle_length=2, block_length=1) 
             # num_parallel_calls=None)
     '''
-    choice_dataset = tf.data.Dataset.range(2).repeat()
+    choice_dataset = tf.data.Dataset.range(100).repeat()
     dataset = tf.data.experimental.choose_from_datasets(
             datasets, choice_dataset)
 
+    dataset_size = ts._SPLITS_TO_SIZES[split_name]
+    dataset = dataset.shuffle(dataset_size)
     dataset = dataset.batch(batch_size, True) # discard tail
     iterator = dataset.make_one_shot_iterator()
     next_element = iterator.get_next()
-    print("**********************{}".format(next_element))
 
     images, labels, filenames = \
             next_element[0], next_element[1], next_element[2]
