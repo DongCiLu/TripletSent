@@ -38,6 +38,8 @@ from tensorflow.python.framework import ops
 import slim
 from slim.nets import resnet_v2
 
+from sklearn.neighbors import KNeighborsClassifier
+
 import ts
 import data_provider
 import triplet_loss
@@ -227,7 +229,8 @@ def cnn_model(features, labels, mode):
                 predictions={
                     'pred_class': predicted_classes,
                     'gt_class': axillary_labels,
-                    'prob': tf.nn.softmax(logits),
+                    'embedding': logits,
+                    # 'prob': tf.nn.softmax(logits),
                 })
 
     # Training 
@@ -302,6 +305,8 @@ def load_noun_adj_list():
     noun_list = pickle.load(pf)
     adj_list = pickle.load(pf)
     pf.close()
+    print("Finished loading noun and adj list of size {} and {}".format(
+        len(noun_list), len(adj_list)))
     return noun_list, adj_list
 
 def customized_evaluation(
@@ -320,6 +325,35 @@ def customized_evaluation(
         accuracy[key] = float(accuracy[key]) / FLAGS.num_predictions
     print("Final accuracy after {} experiments is:\n{}".format(
         FLAGS.num_predictions, accuracy))
+
+def build_knn_classifier(predictions, noun_list, adj_list): 
+    # collect embeddings of all training data
+    training_embeddings = []
+    training_labels = []
+    for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['train'])):
+        training_embeddings.append(pred['embedding'])
+        training_labels.append(pred['gt_class'])
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(training_embeddings, training_labels)
+    return knn
+    
+def customized_knn_evaluation(predictions, noun_list, adj_list, knn): 
+    accuracy = {'ANP': 0, 'noun': 0, 'adj': 0}
+    for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['test'])):
+        testing_embedding = pred['embedding']
+        testing_label = pred['gt_class']
+        testing_prediction = knn.predict(test_embedding)
+        correctness = {'ANP': testing_prediction == testing_label, 
+                       'noun': testing_prediction in noun_list[testing_label],
+                       'adj': testing_prediction in adj_list[testing_label]}
+        for key in correctness:
+            if correctness[key]:
+                accuracy[key] += 1
+
+    for key in accuracy:
+        accuracy[key] = float(accuracy[key]) / ts._SPLITS_TO_SIZES['test']
+    print("Final accuracy after {} experiments is:\n{}".format(
+        ts._SPLITS_TO_SIZES['test'], accuracy))
 
 def main(_):
     if not tf.gfile.Exists(FLAGS.train_log_dir):
@@ -363,16 +397,28 @@ def main(_):
         # This is a fake inference model, as we only use the predict
         # function of estimator but not realy do prediction.
         # We use this as a customized evaluation
+
+        # 1. load train and test data
         noun_list, adj_list = load_noun_adj_list()
 
+        # 2. train the network with triplets
         if FLAGS.num_epochs != 0:
             classifier.train(
                     input_fn=lambda: input_fn('train'),
                     steps=(FLAGS.num_epochs * epoch_size))
-        predictions = classifier.predict(
-                input_fn=lambda:input_fn('predict'))
-        customized_evaluation(
-                predictions, noun_list, adj_list)
+
+        # 3. create a knn classifier with network embeddings of training data
+        training_embeddings = classifier.predict(
+                input_fn=lambda:input_fn('train'))
+        knn = build_knn_classifier(
+                training_embeddings, noun_list, adj_list)
+
+        # 4. get network embeddings of testing data and classify with knn
+        testing_embeddings = classifier.predict(
+                input_fn=lambda:input_fn('test'))
+        customized_knn_evaluation(
+                testing_embeddings, noun_list, adj_list, knn)
+
 
 if __name__ == '__main__':
     tf.logging.set_verbosity(tf.logging.INFO)
