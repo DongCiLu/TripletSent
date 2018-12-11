@@ -27,9 +27,10 @@ sudo apt-get -y install python-dev python-pip
 pip install --upgrade --user tensorflow-gpu
 pip install --user pillow
 pip install --user matplotlib
+pip install --user sklearn
 
 git clone https://github.com/tensorflow/models.git
-mv ./models ./Tensorflow-models
+mv ./models /mydata/Tensorflow-models
 
 cd /mydata
 mkdir /mydata/datasets
