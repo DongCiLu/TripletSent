@@ -25,72 +25,37 @@ from __future__ import print_function
 import os
 import sys
 import tensorflow as tf
-
+from termcolor import colored
 from datasets import dataset_utils
 
 slim = tf.contrib.slim
 
 _CONFIGURATION = "GOOGLE_NORMAL"
 
-if _CONFIGURATION == "FLICKR_128_NORMAL":
-    _FILE_PATTERN = 'ts-%s.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 285932, 'test': 121738, 'predict': 121738}
-    _IMG_SIZE = 128
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 914
-    _INPUT_SIZE = 112
-elif _CONFIGURATION == "FLICKR_NORMAL":
+if _CONFIGURATION == "GOOGLE_NORMAL":
     _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
-    _SPLITS_TO_SIZES = {'train': 282531, 'test': 121288, 'predict': 121288}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 910
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "FLICKR_CAP20":
-    _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
-    _SPLITS_TO_SIZES = {'train': 386619, 'test': 18200, 'predict': 18200}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 910
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "FLICKR_NOUN":
-    _FILE_PATTERN = 'ts-%s_noun.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 283363, 'test': 120813, 'predict': 120813}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 269
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "FLICKR_ADJ":
-    _FILE_PATTERN = 'ts-%s_adj.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 283356, 'test': 120812, 'predict': 120812}
-    _IMG_SIZE = 256
-    _NUM_CHANNELS = 3
-    _NUM_CLASSES = 156
-    _INPUT_SIZE = 224
-elif _CONFIGURATION == "GOOGLE_NORMAL":
-    _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
-    _SPLITS_TO_SIZES = {'train': 46726, 'test': 19765, 'predict': 19765}
+    _SPLITS_TO_SIZES = {'triplet_train': 46726, 'train': 46726, 'test': 19765}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 268
     _INPUT_SIZE = 224
 elif _CONFIGURATION == "GOOGLE_NOUN":
     _FILE_PATTERN = 'ts-%s_noun.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 46726, 'test': 19765, 'predict': 19765}
+    _SPLITS_TO_SIZES = {'triplet_train': 46726, 'train': 46726, 'test': 19765}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 77
     _INPUT_SIZE = 224
 elif _CONFIGURATION == "GOOGLE_ADJ":
     _FILE_PATTERN = 'ts-%s_adj.tfrecord'
-    _SPLITS_TO_SIZES = {'train': 46726, 'test': 19765, 'predict': 19765}
+    _SPLITS_TO_SIZES = {'triplet_train': 46726, 'train': 46726, 'test': 19765}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 105
     _INPUT_SIZE = 224
 else:
     _FILE_PATTERN = '%s'
-    _SPLITS_TO_SIZES = {'train': 0, 'test': 0, 'predict': 0}
+    _SPLITS_TO_SIZES = {'triplet_train': 0, 'train': 0, 'test': 0}
     _IMG_SIZE = 0
     _NUM_CHANNELS = 0
     _NUM_CLASSES = 0
@@ -154,16 +119,12 @@ def get_split(split_name, dataset_dir,
     Raises:
       ValueError: if `split_name` is not a valid train/test split.
     """
-
-    print("****Get split name: {}****".format(split_name))
-    sys.stdout.flush()
     if split_name not in _SPLITS_TO_SIZES:
         raise ValueError('split name %s was not recognized.' % split_name)
 
     if not file_pattern:
         file_pattern = _FILE_PATTERN
     file_pattern = os.path.join(dataset_dir, file_pattern % split_name)
-    print("Currently using file pattern: {}".format(file_pattern))
 
     # Allowing None in the signature so that dataset_factory can use the default.
     if reader is None:

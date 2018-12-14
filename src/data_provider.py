@@ -22,6 +22,7 @@ from __future__ import print_function
 import os
 import math
 import tensorflow as tf
+from termcolor import colored
 
 # from slim.datasets import dataset_factory as datasets
 import ts
@@ -36,10 +37,10 @@ def data_augmentation(image):
     # flip image
     image = tf.image.random_flip_left_right(image)
     # rotate small angles
-    # rotate_degree = tf.random_uniform(
-             # [], -_DA_ROTATE_LIMIT, _DA_ROTATE_LIMIT)
-    # image = tf.contrib.image.rotate(
-            # image, rotate_degree * math.pi / 180, 'BILINEAR')
+    rotate_degree = tf.random_uniform(
+            [], -_DA_ROTATE_LIMIT, _DA_ROTATE_LIMIT)
+    image = tf.contrib.image.rotate(
+            image, rotate_degree * math.pi / 180, 'BILINEAR')
     '''
     # zoom in or out images
     l = tf.random_uniform([], _LEN_LIMIT, 1)
@@ -74,7 +75,10 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
       num_samples: The number of total samples in the dataset.
     '''
 
+    print(colored("Get split name: {}".format(split_name), 'blue'))
     file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
+    print(colored("Currently using file pattern: {}".format(
+        file_pattern), 'red'))
     dataset = tf.data.TFRecordDataset(file_pattern)
     dataset = dataset.map(ts.parse_example)
     datasets = []
@@ -103,7 +107,7 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
             datasets, choice_dataset)
 
     dataset_size = ts._SPLITS_TO_SIZES[split_name]
-    dataset = dataset.shuffle(dataset_size)
+    # dataset = dataset.shuffle(dataset_size)
     dataset = dataset.batch(batch_size, True) # discard tail
     iterator = dataset.make_one_shot_iterator()
     next_element = iterator.get_next()
@@ -136,6 +140,10 @@ def provide_data(split_name, batch_size,
     Raises:
       ValueError: If `split_name` is not either 'train' or 'test'.
     """
+    print(colored("Get split name: {}".format(split_name), 'blue'))
+    file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
+    print(colored("Currently using file pattern: {}".format(
+        file_pattern), 'red'))
     dataset = ts.get_split(split_name, dataset_dir)
     provider = slim.dataset_data_provider.DatasetDataProvider(
             dataset,
@@ -149,10 +157,10 @@ def provide_data(split_name, batch_size,
     '''
     # Data augmentation.
     if split_name == 'train':
-        print("enable data augmentation")
+        print(colored("Enable data augmentation", 'blue'))
         image = data_augmentation(image)
     else: # 'predict' or 'test'
-        print("central crop testing data")
+        print(colored("Disable data augmentation", 'blue'))
         image = tf.image.resize_image_with_crop_or_pad(
                 image, ts._INPUT_SIZE, ts._INPUT_SIZE)
 

@@ -37,7 +37,7 @@ from tensorflow.python import debug as tf_debug
 from tensorflow.python.framework import ops
 import slim
 from slim.nets import resnet_v2
-
+from termcolor import colored
 from sklearn.neighbors import KNeighborsClassifier
 
 import ts
@@ -58,10 +58,7 @@ flags.DEFINE_string('data_source', 'tfrecord',
         'Data source, possible value: tfrecord or nparray.')
 
 flags.DEFINE_string('mode', 'training', 
-        'All modes: [training inference visualization].')
-
-flags.DEFINE_string('train_mode', 'regular', 
-        'Training mode, possible value: regular or triplet.')
+        'All modes: [training triplet_training visualization].')
 
 flags.DEFINE_string('network', 'resnet', 
         'Which network to use: alexnet or resnet.')
@@ -84,12 +81,6 @@ flags.DEFINE_integer('num_epochs', 1,
 flags.DEFINE_string('data_format', 'NCHW',
         'Data format, possible value: NCHW or NHWC.')
 
-flags.DEFINE_integer('num_predictions', 1,
-        'number of images to predict labels.')
-
-flags.DEFINE_string('prediction_out', 'prediction_results.txt',
-        'file to store prediction results.')
-
 flags.DEFINE_string('visualization_in', 'visualization_input',
         'directories for images to visualize.')
 
@@ -98,43 +89,50 @@ flags.DEFINE_string('visualization_out', 'visualization_results',
 
 FLAGS = flags.FLAGS
 
-def input_fn(split_name, source=None):
-    if split_name == 'predict':
-        batch_size = 1
-    else:
-        batch_size = FLAGS.batch_size
-
-    if FLAGS.train_mode == 'triplet' and split_name == 'train':
+def input_fn(split_name, mode='normal'):
+    if mode == 'triplet' and split_name == 'train':
+        print(colored("Input set as triplet training mode.", 'blue'))
+        #TODO: temporary change
         # images, onehot_labels, filenames, axillary_labels = \
-                # data_provider.provide_triplet_data(split_name, 
-                # batch_size, FLAGS.dataset_dir)
+                # data_provider.provide_triplet_data('triplet_train', 
+                # FLAGS.batch_size, FLAGS.dataset_dir)
         images, onehot_labels, filenames, axillary_labels = \
                 data_provider.provide_data(split_name, 
-                batch_size, FLAGS.dataset_dir, 
+                FLAGS.batch_size, FLAGS.dataset_dir, 
                 num_readers=1, num_threads=4)
-    else:
+    elif mode == 'custom_evaluate':
+        print(colored("Input set as custom evaluating mode.", 'blue'))
         images, onehot_labels, filenames, axillary_labels = \
                 data_provider.provide_data(split_name, 
-                batch_size, FLAGS.dataset_dir, 
+                1, FLAGS.dataset_dir, 
+                num_readers=1, num_threads=4)
+    else: #normal
+        print(colored("Input set as normal mode.", 'blue'))
+        images, onehot_labels, filenames, axillary_labels = \
+                data_provider.provide_data(split_name, 
+                FLAGS.batch_size, FLAGS.dataset_dir, 
                 num_readers=1, num_threads=4)
 
+    # TODO: temporary change
     # Data augmentation.
-    if split_name == 'train':
-        print("enable data augmentation")
+    if split_name == 'train' and mode != 'custom_evaluate':
+        print(colored("Enable data augmentation", 'blue'))
         images = data_provider.data_augmentation(images)
-    else: # 'predict' or 'test'
-        print("central crop testing data")
+    else: # 'custom evaluate' or 'test'
+        print(colored("Disable data augmentation", 'blue'))
         images = tf.image.resize_image_with_crop_or_pad(
                 images, ts._INPUT_SIZE, ts._INPUT_SIZE)
 
     # Change the images to [-1.0, 1.0).
     images = (tf.to_float(images) - 128.0) / 128.0
 
-    print("Tensor formatting check: ")
-    print("image shape:{}".format(images.shape))
-    print("onehot label shape:{}".format(onehot_labels.shape))
-    print("filename shape:{}".format(filenames.shape))
-    print("axillary label shape:{}".format(axillary_labels.shape))
+    print(colored("Tensor formatting check: ", 'blue'))
+    print(colored("\timage shape:{}".format(images.shape), 'blue'))
+    print(colored("\tonehot label shape:{}".format(
+        onehot_labels.shape), 'blue'))
+    print(colored("\tfilename shape:{}".format(filenames.shape), 'blue'))
+    print(colored("\taxillary label shape:{}".format(
+        axillary_labels.shape), 'blue'))
     sys.stdout.flush()
 
     features = {'images': images, 'filenames': filenames,
@@ -149,45 +147,45 @@ def alexnet(images, norm_params, mode):
             normalizer_params=norm_params):
         conv1 = layers.conv2d(images, 96, 11, 4, 
                 data_format=FLAGS.data_format)
-        print("conv layers output size: {}".format(conv1.shape))
+        print(colored("Conv1 output size: {}".format(conv1.shape), 'blue'))
         pool1 = layers.max_pool2d(conv1, 3, 2,
                 # padding='SAME',
                 data_format=FLAGS.data_format)
-        print("pooling layers output size: {}".format(pool1.shape))
+        print(colored("Pooling1 output size: {}".format(pool1.shape), 'blue'))
         conv2 = layers.conv2d(pool1, 256, 5, 1, 
                 data_format=FLAGS.data_format)
-        print("conv layers output size: {}".format(conv2.shape))
+        print(colored("Conv2 output size: {}".format(conv2.shape), 'blue'))
         pool2 = layers.max_pool2d(conv2, 3, 2,
                 # padding='SAME',
                 data_format=FLAGS.data_format)
-        print("pooling layers output size: {}".format(pool2.shape))
+        print(colored("Pooling2 output size: {}".format(pool2.shape), 'blue'))
         conv3 = layers.conv2d(pool2, 384, 3, 1, 
                 data_format=FLAGS.data_format)
-        print("conv layers output size: {}".format(conv3.shape))
+        print(colored("Conv3 output size: {}".format(conv3.shape), 'blue'))
         conv4 = layers.conv2d(conv3, 384, 3, 1, 
                 data_format=FLAGS.data_format)
-        print("conv layers output size: {}".format(conv4.shape))
+        print(colored("Conv4 output size: {}".format(conv4.shape), 'blue'))
         conv5 = layers.conv2d(conv4, 256, 3, 1, 
                 data_format=FLAGS.data_format)
-        print("conv layers output size: {}".format(conv5.shape))
+        print(colored("Conv5 output size: {}".format(conv5.shape), 'blue'))
         pool3 = layers.max_pool2d(conv5, 3, 2,
                 # padding='SAME',
                 data_format=FLAGS.data_format)
-        print("pooling layers output size: {}".format(pool3.shape))
+        print(colored("Pooling3 output size: {}".format(pool3.shape), 'blue'))
 
         flat = layers.flatten(pool3)
-        print("after flat layers output size: {}".format(flat.shape))
+        print(colored("Flat layer output size: {}".format(flat.shape), 'blue'))
         fc1 = layers.fully_connected(flat, 4096)
-        print("fc layers output size: {}".format(fc1.shape))
+        print(colored("FC1 output size: {}".format(fc1.shape), 'blue'))
         fc1_dropout = layers.dropout(fc1, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
         fc2 = layers.fully_connected(fc1, 4096)
-        print("fc layers output size: {}".format(fc2.shape))
+        print(colored("FC2 output size: {}".format(fc2.shape), 'blue'))
         fc2_dropout = layers.dropout(fc2, 
                 is_training=(mode==tf.estimator.ModeKeys.TRAIN))
         logits = layers.fully_connected(
                 fc2_dropout, ts._NUM_CLASSES, activation_fn=None)
-        print("fc layers output size: {}".format(logits.shape))
+        print(colored("Network output size: {}".format(logits.shape), 'blue'))
         sys.stdout.flush()
         
     return logits
@@ -201,7 +199,8 @@ def cnn_model(features, labels, mode):
     if FLAGS.network == 'alexnet':
         # Format data
         if FLAGS.data_format == 'NCHW':
-            print("Converting data format to channels first (NCHW)")
+            print(colored("Converting data format to channels first (NCHW)", \
+                    'blue'))
             images = tf.transpose(images, [0, 3, 1, 2])
 
         # Setup batch normalization
@@ -235,7 +234,7 @@ def cnn_model(features, labels, mode):
 
     # Training 
     groundtruth_classes = tf.argmax(onehot_labels, 1)
-    if FLAGS.train_mode == "triplet":
+    if FLAGS.mode == "triplet_training":
         if FLAGS.triplet_mining_method == "batchall":
             loss, fraction_positive_triplets, num_valid_triplets = \
                     triplet_loss.batch_all_triplet_loss(
@@ -250,7 +249,6 @@ def cnn_model(features, labels, mode):
     else:
         loss = tf.losses.softmax_cross_entropy(
                 onehot_labels=onehot_labels, logits=logits)
-    print("--------{}".format(loss))
 
     if mode == tf.estimator.ModeKeys.TRAIN:
         if FLAGS.optimizer == 'GD':
@@ -305,55 +303,44 @@ def load_noun_adj_list():
     noun_list = pickle.load(pf)
     adj_list = pickle.load(pf)
     pf.close()
-    print("Finished loading noun and adj list of size {} and {}".format(
-        len(noun_list), len(adj_list)))
+    print(colored("Finished loading noun and adj list of size {} and {}".format(
+        len(noun_list), len(adj_list)), 'blue'))
     return noun_list, adj_list
-
-def customized_evaluation(
-        predictions, noun_list, adj_list): 
-    accuracy = {'ANP': 0, 'noun': 0, 'adj': 0}
-    for pred, _ in zip(predictions, range(FLAGS.num_predictions)):
-        pred_ANP = pred['pred_class']
-        gt_ANP = pred['gt_class']
-        correctness = {'ANP': pred_ANP == gt_ANP, 
-                       'noun': pred_ANP in noun_list[gt_ANP],
-                       'adj': pred_ANP in adj_list[gt_ANP]}
-        for key in correctness:
-            if correctness[key]:
-                accuracy[key] += 1
-    for key in accuracy:
-        accuracy[key] = float(accuracy[key]) / FLAGS.num_predictions
-    print("Final accuracy after {} experiments is:\n{}".format(
-        FLAGS.num_predictions, accuracy))
 
 def build_knn_classifier(predictions, noun_list, adj_list): 
     # collect embeddings of all training data
-    training_embeddings = []
-    training_labels = []
+    train_embeddings = []
+    train_labels = []
+    # TODO: temporary change
     for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['train'])):
-        training_embeddings.append(pred['embedding'])
-        training_labels.append(pred['gt_class'])
+    # for pred, _ in zip(predictions, range(100)):
+        train_embeddings.append(pred['embedding'])
+        train_labels.append(pred['gt_class'])
     knn = KNeighborsClassifier(n_neighbors=5)
-    knn.fit(training_embeddings, training_labels)
+    knn.fit(train_embeddings, train_labels)
     return knn
     
 def customized_knn_evaluation(predictions, noun_list, adj_list, knn): 
     accuracy = {'ANP': 0, 'noun': 0, 'adj': 0}
+    test_embeddings = []
+    test_labels = []
+    # TODO: temporary change
     for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['test'])):
-        testing_embedding = pred['embedding']
-        testing_label = pred['gt_class']
-        testing_prediction = knn.predict(test_embedding)
-        correctness = {'ANP': testing_prediction == testing_label, 
-                       'noun': testing_prediction in noun_list[testing_label],
-                       'adj': testing_prediction in adj_list[testing_label]}
+    # for pred, _ in zip(predictions, range(100)):
+        test_embeddings.append(pred['embedding'])
+        test_labels.append(pred['gt_class'])
+    test_predictions = knn.predict(test_embeddings)
+    for test_prediction, test_label in zip(test_predictions, test_labels):
+        correctness = {'ANP': test_prediction == test_label, 
+                       'noun': test_prediction in noun_list[test_label],
+                       'adj': test_prediction in adj_list[test_label]}
         for key in correctness:
             if correctness[key]:
                 accuracy[key] += 1
-
     for key in accuracy:
         accuracy[key] = float(accuracy[key]) / ts._SPLITS_TO_SIZES['test']
-    print("Final accuracy after {} experiments is:\n{}".format(
-        ts._SPLITS_TO_SIZES['test'], accuracy))
+    print(colored("Final accuracy after {} experiments is:\n{}".format(
+        ts._SPLITS_TO_SIZES['test'], accuracy), 'blue'))
 
 def main(_):
     if not tf.gfile.Exists(FLAGS.train_log_dir):
@@ -366,10 +353,9 @@ def main(_):
     test_size = int(math.ceil(float(ts._SPLITS_TO_SIZES['test'] / 
             FLAGS.batch_size)))
 
-    #############Remember to change##############
-    epoch_size = 500
-    test_size = 10
-    #############Remember to change##############
+    # TODO: temporary change
+    # epoch_size = 5
+    # test_size = 10
 
     session_config = tf.ConfigProto()
     session_config.gpu_options.allow_growth=True
@@ -393,29 +379,23 @@ def main(_):
         tf.estimator.train_and_evaluate(
                 classifier, train_spec, eval_spec)
 
-    elif FLAGS.mode == 'custom_training':
-        # This is a fake inference model, as we only use the predict
-        # function of estimator but not realy do prediction.
-        # We use this as a customized evaluation
-
+    elif FLAGS.mode == 'triplet_training':
         # 1. load train and test data
         noun_list, adj_list = load_noun_adj_list()
 
         # 2. train the network with triplets
-        if FLAGS.num_epochs != 0:
-            classifier.train(
-                    input_fn=lambda: input_fn('train'),
-                    steps=(FLAGS.num_epochs * epoch_size))
+        classifier.train(input_fn=lambda: input_fn('train', 'triplet'),
+                max_steps=(FLAGS.num_epochs * epoch_size))
 
         # 3. create a knn classifier with network embeddings of training data
         training_embeddings = classifier.predict(
-                input_fn=lambda:input_fn('train'))
+                input_fn=lambda:input_fn('train', 'custom_evaluate'))
         knn = build_knn_classifier(
                 training_embeddings, noun_list, adj_list)
 
         # 4. get network embeddings of testing data and classify with knn
         testing_embeddings = classifier.predict(
-                input_fn=lambda:input_fn('test'))
+                input_fn=lambda:input_fn('test', 'custom_evaluate'))
         customized_knn_evaluation(
                 testing_embeddings, noun_list, adj_list, knn)
 

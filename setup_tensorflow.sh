@@ -28,6 +28,7 @@ pip install --upgrade --user tensorflow-gpu
 pip install --user pillow
 pip install --user matplotlib
 pip install --user sklearn
+pip install --user termcolor
 
 git clone https://github.com/tensorflow/models.git
 mv ./models /mydata/Tensorflow-models

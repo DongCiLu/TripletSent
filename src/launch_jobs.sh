@@ -38,8 +38,8 @@ set -e
 
 # define run mode
 run_mode=$1
-if ! [[ "$run_mode" =~ ^(test|training|triplet_training|custom_training|custom_evaluation|visualization) ]]; then
-    echo "'run_mode' mus t be one of: 'test', 'training', 'triplet_training', 'custom_training', 'custom_evaluation', 'visualization'."
+if ! [[ "$run_mode" =~ ^(test|training|triplet_training|visualization) ]]; then
+    echo "'run_mode' must be one of: 'test', 'training', 'triplet_training', 'visualization'."
     exit
 fi
 
@@ -117,38 +117,11 @@ if [[ "$run_mode" == "triplet_training" ]]; then
     ${PYTHON} "${src_dir}/train.py" \
         --train_log_dir=${TRAIN_DIR} \
         --dataset_dir=${DATASET_DIR} \
-        --mode="training" \
-        --train_mode="triplet" \
+        --mode="triplet_training" \
         --network="alexnet" \
         --optimizer="Adam" \
+        --batch_size=512 \
         --num_epochs=${NUM_EPOCHS} \
-        --alsologtostderr
-fi
-
-# Run customized training.
-if [[ "$run_mode" == "custom_training" ]]; then
-    NUM_PREDICTIONS=121738
-    for (( i=1; i<=$NUM_EPOCHS; i++ ))
-    do
-        ${PYTHON} "${src_dir}/train.py" \
-            --train_log_dir=${TRAIN_DIR} \
-            --dataset_dir=${DATASET_DIR} \
-            --mode="custom_training" \
-            --num_epochs=1 \
-            --num_predictions=${NUM_PREDICTIONS} \
-            --alsologtostderr
-    done
-fi
-
-# Run customized evaluation
-if [[ "$run_mode" == "custom_evaluation" ]]; then
-    NUM_PREDICTIONS=121738
-    ${PYTHON} "${src_dir}/train.py" \
-        --train_log_dir=${TRAIN_DIR} \
-        --dataset_dir=${DATASET_DIR} \
-        --mode="custom_training" \
-        --num_epochs=0 \
-        --num_predictions=${NUM_PREDICTIONS} \
         --alsologtostderr
 fi
 
