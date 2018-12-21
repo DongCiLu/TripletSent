@@ -69,7 +69,7 @@ flags.DEFINE_string('triplet_mining_method', 'batchall',
 flags.DEFINE_float('triplet_margin', 0.2, 
         'Value of margin used for triplet loss.')
 
-flags.DEFINE_float('lr', 1e-3, 
+flags.DEFINE_float('learnig_rate', 1e-3, 
         'Learning rate for the network.')
 
 flags.DEFINE_string('optimizer', 'Adam',

@@ -121,6 +121,7 @@ if [[ "$run_mode" == "triplet_training" ]]; then
         --network="alexnet" \
         --optimizer="Adam" \
         --batch_size=512 \
+        --learning_rate=1e-4 \
         --num_epochs=${NUM_EPOCHS} \
         --alsologtostderr
 fi
