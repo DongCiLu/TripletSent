@@ -114,15 +114,21 @@ fi
 
 # Run triplet training.
 if [[ "$run_mode" == "triplet_training" ]]; then
-    ${PYTHON} "${src_dir}/train.py" \
-        --train_log_dir=${TRAIN_DIR} \
-        --dataset_dir=${DATASET_DIR} \
-        --mode="triplet_training" \
-        --network="alexnet" \
-        --optimizer="Adam" \
-        --batch_size=512 \
-        --num_epochs=${NUM_EPOCHS} \
-        --alsologtostderr
+    EPOCHS_PER_RUN=10
+    NUM_RUN=$((NUM_EPOCHS / EPOCHS_PER_RUN))
+    for ((i=1; i<=NUM_RUN; i++))
+        do
+        ${PYTHON} "${src_dir}/train.py" \
+            --train_log_dir=${TRAIN_DIR} \
+            --dataset_dir=${DATASET_DIR} \
+            --mode="triplet_training" \
+            --network="alexnet" \
+            --optimizer="Adam" \
+            --batch_size=512 \
+            --learning_rate=1e-6 \
+            --num_epochs=$((EPOCHS_PER_RUN * i)) \
+            --alsologtostderr
+        done
 fi
 
 # Run visualization

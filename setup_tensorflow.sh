@@ -2,7 +2,11 @@ ssh-keygen
 ssh-copy-id lanterns2.eecs.utk.edu
 ssh-copy-id com1504.eecs.utk.edu
 git clone https://github.com/DongCiLu/Scripts
+
+sudo mkdir /mydata
+sudo /usr/local/etc/emulab/mkextrafs.pl /mydata
 sudo chmod 777 /mydata
+mv ~/TripletSent /mydata
 
 # install cuda toolkit 10.0
 scp -r lanterns2.eecs.utk.edu:/local_scratch/CUDA /mydata
