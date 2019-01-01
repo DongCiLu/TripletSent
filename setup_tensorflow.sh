@@ -1,11 +1,12 @@
 ssh-keygen
 ssh-copy-id lanterns2.eecs.utk.edu
 ssh-copy-id com1504.eecs.utk.edu
-git clone https://github.com/DongCiLu/Scripts
 
 sudo mkdir /mydata
 sudo /usr/local/etc/emulab/mkextrafs.pl /mydata
 sudo chmod 777 /mydata
+cd /mydata
+git clone https://github.com/DongCiLu/Scripts
 mv ~/TripletSent /mydata
 
 # install cuda toolkit 10.0
@@ -21,8 +22,8 @@ sudo dpkg -i libcudnn7-dev_7.4.1.5-1+cuda9.0_amd64.deb
 cd ~/
 
 rm ~/.bashrc
-ln -s ~/Scripts/.bashrc ~/.bashrc
-ln -s ~/Scripts/.bash_aliases ~/.bash_aliases
+ln -s /mydata/Scripts/.bashrc ~/.bashrc
+ln -s /mydata/Scripts/.bash_aliases ~/.bash_aliases
 source ~/.bashrc
 
 sudo apt-get update
