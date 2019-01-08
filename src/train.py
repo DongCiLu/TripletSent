@@ -69,7 +69,7 @@ flags.DEFINE_string('triplet_mining_method', 'batchall',
 flags.DEFINE_float('triplet_margin', 0.2, 
         'Value of margin used for triplet loss.')
 
-flags.DEFINE_float('learnig_rate', 1e-3, 
+flags.DEFINE_float('learning_rate', 1e-3, 
         'Learning rate for the network.')
 
 flags.DEFINE_string('optimizer', 'Adam',
@@ -253,7 +253,7 @@ def cnn_model(features, labels, mode):
     if mode == tf.estimator.ModeKeys.TRAIN:
         if FLAGS.optimizer == 'GD':
             decay_factor = 0.96
-            learning_rate = tf.train.exponential_decay(FLAGS.lr,
+            learning_rate = tf.train.exponential_decay(FLAGS.learning_rate,
                     tf.train.get_global_step(),
                     int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
                         FLAGS.batch_size))),
@@ -262,7 +262,7 @@ def cnn_model(features, labels, mode):
                     learning_rate=learning_rate)
         elif FLAGS.optimizer == 'Momentum':
             decay_factor = 0.96
-            learning_rate = tf.train.exponential_decay(FLAGS.lr,
+            learning_rate = tf.train.exponential_decay(FLAGS.learning_rate,
                     tf.train.get_global_step(),
                     int(math.ceil(float(ts._SPLITS_TO_SIZES['train'] / 
                         FLAGS.batch_size))),
@@ -270,7 +270,8 @@ def cnn_model(features, labels, mode):
             optimizer = tf.train.MomentumOptimizer(
                     learning_rate=learning_rate, momentum=0.9)
         else:
-            optimizer = tf.train.AdamOptimizer(learning_rate=FLAGS.lr)
+            optimizer = tf.train.AdamOptimizer(
+                    learning_rate=FLAGS.learning_rate)
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
