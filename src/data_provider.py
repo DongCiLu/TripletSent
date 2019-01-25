@@ -61,7 +61,7 @@ def data_augmentation(image):
 
     return image
 
-def provide_triplet_data(split_name, batch_size, dataset_dir):
+def provide_triplet_data(split_name, batch_size, dataset_dir, class_list):
     ''' 
     Arrange data into batches that each batch contains multiple class examples
 
@@ -75,16 +75,25 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
       num_samples: The number of total samples in the dataset.
     '''
 
-    print(colored("Get split name: {}".format(split_name), 'blue'))
-    file_pattern = os.path.join(dataset_dir, ts._FILE_PATTERN % split_name)
-    print(colored("Currently using file pattern: {}".format(
-        file_pattern), 'red'))
-    dataset = tf.data.TFRecordDataset(file_pattern)
-    dataset = dataset.map(ts.parse_example)
     datasets = []
+    print(colored("Get split name: {}".format(split_name), 'blue'))
+    for class_name in class_list:
+        file_pattern = os.path.join(dataset_dir, 
+                ts._FILE_PATTERN % (split_name, class_name))
+        print(colored("Currently using file pattern: {}".format(
+            file_pattern), 'red'))
+        single_class_dataset = tf.data.TFRecordDataset(file_pattern)
+        single_class_dataset = single_class_dataset.map(ts.parse_example)
+        # TODO: shuffle before mixing or after mixing?
+        if split_name == 'train':
+            single_class_dataset = single_class_dataset.shuffle(
+                    1000, reshuffle_each_iteration=True)
+        datasets.append(single_class_dataset)
+    '''
     for i in range(100, 200):
         datasets.append(dataset.filter(lambda image, label, filename: 
             tf.reshape(tf.equal(tf.unstack(label)[0], 177), [])))
+    '''
 
     '''
     dataset1 = dataset.filter(lambda image, label, filename: 
@@ -102,19 +111,17 @@ def provide_triplet_data(split_name, batch_size, dataset_dir):
             # cycle_length=2, block_length=1) 
             # num_parallel_calls=None)
     '''
-    choice_dataset = tf.data.Dataset.range(100).repeat()
+    choice_dataset = tf.data.Dataset.range(len(datasets)).repeat()
     dataset = tf.data.experimental.choose_from_datasets(
             datasets, choice_dataset)
 
-    dataset_size = ts._SPLITS_TO_SIZES[split_name]
-    # dataset = dataset.shuffle(dataset_size)
     dataset = dataset.batch(batch_size, True) # discard tail
     iterator = dataset.make_one_shot_iterator()
     next_element = iterator.get_next()
 
     images, labels, filenames = \
             next_element[0], next_element[1], next_element[2]
-    labels = tf.squeeze(labels)
+    labels = tf.squeeze(labels, [1])
 
     one_hot_labels = tf.one_hot(labels, ts._NUM_CLASSES)
 

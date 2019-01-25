@@ -5,11 +5,11 @@ import numpy as np
 from shutil import copyfile
 
 src_dir_pattern = "../datasets/google/regular/{}"
-dst_dir_pattern = "../datasets/google/regular/{}_{}"
+dst_dir_pattern = "../datasets/google/regular/single/{}_{}"
 tfrecord_dir = "../datasets/google/regular/tfrecord/single"
 labels_file = "label_list_filtered.txt"
 build_script_pattern = "python build_image_data_simple.py --train_directory {} --validation_directory {} --output_directory {} --labels_file {}"
-tfrecord_pattern = "tfrecord-{}_{}_{}.tfrecord"
+tfrecord_pattern = "ts-{}_{}_{}.tfrecord"
 dataset_type = 'anp'
 
 def generate_dir_structure(split, target_class):
@@ -50,6 +50,11 @@ def generate_tfrecord(target_class):
     os.rename(src_train_tfrecord, dst_train_tfrecord)
     os.rename(src_test_tfrecord, dst_test_tfrecord)
 
+def read_labels():
+    with open(labels_file, 'r') as f:
+        class_list = [line.rstrip() for line in f]
+    return class_list
+
 if __name__=='__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('target_class', type=str)
@@ -58,8 +63,17 @@ if __name__=='__main__':
     print(args.target_class, args.gpu)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    generate_dir_structure('train', args.target_class)
-    generate_dir_structure('test', args.target_class)
-
-    generate_tfrecord(args.target_class)
+    if args.target_class == 'all':
+        class_list = read_labels()
+        for target_class in class_list:
+            print("Processing {}".format(target_class))
+            generate_dir_structure('train', target_class)
+            generate_dir_structure('test', target_class)
+            generate_tfrecord(target_class)
+    else:
+        print("Processing {}".format(args.target_class))
+        generate_dir_structure('train', args.target_class)
+        generate_dir_structure('test', args.target_class)
+        generate_tfrecord(args.target_class)
+        
 

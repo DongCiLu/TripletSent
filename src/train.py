@@ -89,23 +89,32 @@ flags.DEFINE_string('visualization_out', 'visualization_results',
 
 FLAGS = flags.FLAGS
 
+def get_class_list():
+    with open(ts._ANP_LIST_FN, 'r') as f:
+        class_list = [line.rstrip() for line in f]
+    return class_list
+
 def input_fn(split_name, mode='normal'):
     if mode == 'triplet' and split_name == 'train':
         print(colored("Input set as triplet training mode.", 'blue'))
-        #TODO: temporary change
-        # images, onehot_labels, filenames, axillary_labels = \
-                # data_provider.provide_triplet_data('triplet_train', 
-                # FLAGS.batch_size, FLAGS.dataset_dir)
+        class_list = get_class_list()
+        print(colored("Reading samples from {} classes.".format(
+            len(class_list)), 'blue'))
         images, onehot_labels, filenames, axillary_labels = \
-                data_provider.provide_data(split_name, 
-                FLAGS.batch_size, FLAGS.dataset_dir, 
-                num_readers=1, num_threads=4)
+                data_provider.provide_triplet_data(split_name, 
+                FLAGS.batch_size, FLAGS.dataset_dir, class_list)
+        # images, onehot_labels, filenames, axillary_labels = \
+                # data_provider.provide_data(split_name, 
+                # FLAGS.batch_size, FLAGS.dataset_dir, 
+                # num_readers=1, num_threads=4)
     elif mode == 'custom_evaluate':
         print(colored("Input set as custom evaluating mode.", 'blue'))
+        class_list = get_class_list()
+        print(colored("Reading samples from {} classes.".format(
+            len(class_list)), 'blue'))
         images, onehot_labels, filenames, axillary_labels = \
-                data_provider.provide_data(split_name, 
-                1, FLAGS.dataset_dir, 
-                num_readers=1, num_threads=4)
+                data_provider.provide_triplet_data(split_name, 
+                1, FLAGS.dataset_dir, class_list)
     else: #normal
         print(colored("Input set as normal mode.", 'blue'))
         images, onehot_labels, filenames, axillary_labels = \
@@ -300,7 +309,7 @@ def cnn_model(features, labels, mode):
             mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 def load_noun_adj_list():
-    pf = open('preprocess/noun_adj_list.p', 'rb')
+    pf = open(ts._NA_LIST_FN, 'rb')
     noun_list = pickle.load(pf)
     adj_list = pickle.load(pf)
     pf.close()
@@ -312,22 +321,20 @@ def build_knn_classifier(predictions, noun_list, adj_list):
     # collect embeddings of all training data
     train_embeddings = []
     train_labels = []
-    # TODO: temporary change
     for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['train'])):
-    # for pred, _ in zip(predictions, range(100)):
         train_embeddings.append(pred['embedding'])
         train_labels.append(pred['gt_class'])
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(train_embeddings, train_labels)
+    print(colored("Build KNN classifier with {} samples.".format(
+        len(train_embeddings)), 'blue'))
     return knn
     
 def customized_knn_evaluation(predictions, noun_list, adj_list, knn): 
     accuracy = {'ANP': 0, 'noun': 0, 'adj': 0}
     test_embeddings = []
     test_labels = []
-    # TODO: temporary change
     for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['test'])):
-    # for pred, _ in zip(predictions, range(100)):
         test_embeddings.append(pred['embedding'])
         test_labels.append(pred['gt_class'])
     test_predictions = knn.predict(test_embeddings)
@@ -339,9 +346,9 @@ def customized_knn_evaluation(predictions, noun_list, adj_list, knn):
             if correctness[key]:
                 accuracy[key] += 1
     for key in accuracy:
-        accuracy[key] = float(accuracy[key]) / ts._SPLITS_TO_SIZES['test']
+        accuracy[key] = float(accuracy[key]) / len(test_predictions)
     print(colored("Final accuracy after {} experiments is:\n{}".format(
-        ts._SPLITS_TO_SIZES['test'], accuracy), 'blue'))
+        len(test_predictions), accuracy), 'blue'))
 
 def main(_):
     if not tf.gfile.Exists(FLAGS.train_log_dir):

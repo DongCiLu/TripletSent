@@ -114,7 +114,9 @@ fi
 
 # Run triplet training.
 if [[ "$run_mode" == "triplet_training" ]]; then
-    EPOCHS_PER_RUN=10
+    # EPOCHS_PER_RUN=10
+    # TODO: temperory change
+    EPOCHS_PER_RUN=1
     NUM_RUN=$((NUM_EPOCHS / EPOCHS_PER_RUN))
     for ((i=1; i<=NUM_RUN; i++))
         do
@@ -125,7 +127,7 @@ if [[ "$run_mode" == "triplet_training" ]]; then
             --network="alexnet" \
             --optimizer="Adam" \
             --batch_size=512 \
-            --learning_rate=1e-6 \
+            --learning_rate=1e-4 \
             --num_epochs=$((EPOCHS_PER_RUN * i)) \
             --alsologtostderr
         done

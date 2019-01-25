@@ -45,9 +45,10 @@ class DataProviderTest(tf.test.TestCase):
         '''
         # whole_dataset_tensors = data_provider.read_whole_dataset(
                  # split_name, dataset_dir)
+        class_list = ['silly_girl', 'dead_tree']
         images, oh_labels, filenames, ax_labels = \
                 data_provider.provide_triplet_data(
-                        split_name, batch_size, dataset_dir)
+                        split_name, batch_size, dataset_dir, class_list)
 
         '''
         with self.test_session() as sess:
@@ -69,7 +70,7 @@ class DataProviderTest(tf.test.TestCase):
                 images1, oh_labels1, filenames1, ax_labels1 = \
                         sess.run([images, oh_labels, filenames, ax_labels])
 
-                print(images1)
+                # print(images1)
                 print(oh_labels1)
                 print(filenames1)
                 print(ax_labels1)
