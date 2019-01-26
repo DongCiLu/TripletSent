@@ -31,7 +31,7 @@ from datasets import dataset_utils
 slim = tf.contrib.slim
 
 _CONFIGURATION = "GOOGLE_TRIPLET_ANP"
-_NA_LIST_FN = 'preprocess/noun_adj_list.p'
+_METADATA_FN = 'preprocess/metadata.p'
 _ANP_LIST_FN = 'preprocess/label_list_filtered.txt'
 
 if _CONFIGURATION == "GOOGLE_ANP":
@@ -41,7 +41,7 @@ if _CONFIGURATION == "GOOGLE_ANP":
     _NUM_CHANNELS = 3
     _NUM_CLASSES = 268
     _INPUT_SIZE = 224
-if _CONFIGURATION == "GOOGLE_TRIPLET_ANP":
+elif _CONFIGURATION == "GOOGLE_TRIPLET_ANP":
     _FILE_PATTERN = 'single/ts-%s_anp_%s.tfrecord' 
     _SPLITS_TO_SIZES = {'triplet_train': 46726, 'train': 46726, 'test': 19765}
     _IMG_SIZE = 256

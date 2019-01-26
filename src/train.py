@@ -24,7 +24,9 @@ import os
 import sys
 import math
 import time
+import copy
 import pickle
+import random
 from PIL import Image
 from PIL import ImageDraw
 # import matplotlib as mpl
@@ -94,7 +96,7 @@ def get_class_list():
         class_list = [line.rstrip() for line in f]
     return class_list
 
-def input_fn(split_name, mode='normal'):
+def input_fn(split_name, mode='normal', additional_data = None):
     if mode == 'triplet' and split_name == 'train':
         print(colored("Input set as triplet training mode.", 'blue'))
         class_list = get_class_list()
@@ -102,7 +104,8 @@ def input_fn(split_name, mode='normal'):
             len(class_list)), 'blue'))
         images, onehot_labels, filenames, axillary_labels = \
                 data_provider.provide_triplet_data(split_name, 
-                FLAGS.batch_size, FLAGS.dataset_dir, class_list)
+                FLAGS.batch_size, FLAGS.dataset_dir, 
+                class_list, additional_data)
         # images, onehot_labels, filenames, axillary_labels = \
                 # data_provider.provide_data(split_name, 
                 # FLAGS.batch_size, FLAGS.dataset_dir, 
@@ -308,14 +311,16 @@ def cnn_model(features, labels, mode):
     return tf.estimator.EstimatorSpec(
             mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
-def load_noun_adj_list():
-    pf = open(ts._NA_LIST_FN, 'rb')
+def load_metadata():
+    # noun and adj list are lists of dictionaries for fast look up
+    pf = open(ts._METADATA_FN, 'rb')
     noun_list = pickle.load(pf)
     adj_list = pickle.load(pf)
+    sample_cnt_list = pickle.load(pf)
     pf.close()
     print(colored("Finished loading noun and adj list of size {} and {}".format(
         len(noun_list), len(adj_list)), 'blue'))
-    return noun_list, adj_list
+    return noun_list, adj_list, sample_cnt_list
 
 def build_knn_classifier(predictions, noun_list, adj_list): 
     # collect embeddings of all training data
@@ -349,6 +354,47 @@ def customized_knn_evaluation(predictions, noun_list, adj_list, knn):
         accuracy[key] = float(accuracy[key]) / len(test_predictions)
     print(colored("Final accuracy after {} experiments is:\n{}".format(
         len(test_predictions), accuracy), 'blue'))
+
+def update_tables(noun_dict, sample_cnt_dict, sample):
+    if sample not in sample_cnt_dict:
+        return
+    sample_cnt_dict[sample] -= 2
+    if sample_cnt_dict[sample] < 2:
+        nbrs = copy.deepcopy(noun_dict[sample].keys())
+        if len(nbrs) <= 2:
+            for nbr in nbrs:
+                sample_cnt_dict.pop(nbr)
+                noun_dict.pop(nbr)
+        else:
+            sample_cnt_dict.pop(sample)
+            for nbr in nbrs:
+                noun_dict[nbr].pop(sample)
+            noun_dict.pop(sample)
+
+def generate_choice_dataset(noun_list, sample_cnt_list):
+    choice_dataset = []
+    sample_cnt_dict = {}
+    noun_dict = {}
+    for i in range(len(sample_cnt_list)):
+        sample_cnt_dict[i] = copy.deepcopy(sample_cnt_list[i])
+    for i in range(len(noun_list)):
+        noun_dict[i] = copy.deepcopy(noun_list[i])
+    # need a pair of class a and class b so that we can make 4 triplets out of 4 samples
+    while sample_cnt_dict:
+        # randomly pick anchor and negative
+        anchor = random.choice(sample_cnt_dict.keys())
+        choice_dataset.append(anchor)
+        choice_dataset.append(anchor)
+        # TODO: negative should not equal to itself
+        negative = random.choice(noun_dict[anchor].keys())
+        choice_dataset.append(negative)
+        choice_dataset.append(negative)
+        # update tables
+        update_tables(noun_dict, sample_cnt_dict, anchor)
+        update_tables(noun_dict, sample_cnt_dict, negative)
+    
+    print("Genearate choice dataset of {} samples".format(len(choice_dataset)))
+    return choice_dataset
 
 def main(_):
     if not tf.gfile.Exists(FLAGS.train_log_dir):
@@ -389,11 +435,20 @@ def main(_):
 
     elif FLAGS.mode == 'triplet_training':
         # 1. load train and test data
-        noun_list, adj_list = load_noun_adj_list()
+        noun_list, adj_list, sample_cnt_list = load_metadata()
 
         # 2. train the network with triplets
-        classifier.train(input_fn=lambda: input_fn('train', 'triplet'),
-                max_steps=(FLAGS.num_epochs * epoch_size))
+        total_step = 0
+        # 2.1 prepare dataset sequence for each epoch
+        choice_dataset = generate_choice_dataset(noun_list, sample_cnt_list)
+        actual_epoch_size = int(math.ceil(float(len(choice_dataset) / 
+            FLAGS.batch_size)))
+        # 2.2 use the choice dataset to form triplets and train the network
+        for epoch in range(FLAGS.num_epochs):
+            classifier.train(input_fn=lambda: input_fn(
+                    'train', 'triplet', choice_dataset), 
+                    # max_steps=(FLAGS.num_epochs * epoch_size))
+                    steps=(actual_epoch_size))
 
         # 3. create a knn classifier with network embeddings of training data
         training_embeddings = classifier.predict(

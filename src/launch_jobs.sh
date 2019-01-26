@@ -128,7 +128,8 @@ if [[ "$run_mode" == "triplet_training" ]]; then
             --optimizer="Adam" \
             --batch_size=512 \
             --learning_rate=1e-4 \
-            --num_epochs=$((EPOCHS_PER_RUN * i)) \
+            # --num_epochs=$((EPOCHS_PER_RUN * i)) \
+            --num_epochs=$(EPOCHS_PER_RUN) \
             --alsologtostderr
         done
 fi

@@ -21,6 +21,8 @@ from __future__ import print_function
 
 import os
 import math
+import random
+import numpy as np
 import tensorflow as tf
 from termcolor import colored
 
@@ -61,7 +63,8 @@ def data_augmentation(image):
 
     return image
 
-def provide_triplet_data(split_name, batch_size, dataset_dir, class_list):
+def provide_triplet_data(split_name, batch_size, 
+        dataset_dir, class_list, choice_dataset_list):
     ''' 
     Arrange data into batches that each batch contains multiple class examples
 
@@ -89,29 +92,14 @@ def provide_triplet_data(split_name, batch_size, dataset_dir, class_list):
             single_class_dataset = single_class_dataset.shuffle(
                     1000, reshuffle_each_iteration=True)
         datasets.append(single_class_dataset)
-    '''
-    for i in range(100, 200):
-        datasets.append(dataset.filter(lambda image, label, filename: 
-            tf.reshape(tf.equal(tf.unstack(label)[0], 177), [])))
-    '''
 
-    '''
-    dataset1 = dataset.filter(lambda image, label, filename: 
-            tf.reshape(tf.equal(tf.unstack(label)[0], 177), []))
-    dataset2 = dataset.filter(lambda image, label, filename: 
-            tf.reshape(tf.equal(tf.unstack(label)[0], 99), []))
+    if choice_dataset_list:
+        choice_dataset = tf.data.Dataset.from_tensor_slices(
+                np.array(choice_dataset_list, dtype=np.int64))
+    else:
+        choice_dataset = tf.data.Dataset.range(len(datasets)).repeat()
 
-    datasets = [dataset1, dataset2]
-
-    dataset = tf.data.Dataset.zip((dataset1, dataset2)).flat_map(
-            lambda x0, x1: tf.data.Dataset.from_tensors(x0).concatenate(
-                tf.data.Dataset.from_tensors(x1)))
-    # dataset = tf.data.Dataset.range(2).interleave(
-            # lambda x: datasets[x], 
-            # cycle_length=2, block_length=1) 
-            # num_parallel_calls=None)
-    '''
-    choice_dataset = tf.data.Dataset.range(len(datasets)).repeat()
+    print("______", choice_dataset.output_types)
     dataset = tf.data.experimental.choose_from_datasets(
             datasets, choice_dataset)
 
