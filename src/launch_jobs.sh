@@ -114,9 +114,7 @@ fi
 
 # Run triplet training.
 if [[ "$run_mode" == "triplet_training" ]]; then
-    # EPOCHS_PER_RUN=10
-    # TODO: temperory change
-    EPOCHS_PER_RUN=1
+    EPOCHS_PER_RUN=3
     NUM_RUN=$((NUM_EPOCHS / EPOCHS_PER_RUN))
     for ((i=1; i<=NUM_RUN; i++))
         do
@@ -128,8 +126,7 @@ if [[ "$run_mode" == "triplet_training" ]]; then
             --optimizer="Adam" \
             --batch_size=512 \
             --learning_rate=1e-4 \
-            # --num_epochs=$((EPOCHS_PER_RUN * i)) \
-            --num_epochs=$(EPOCHS_PER_RUN) \
+            --num_epochs=${EPOCHS_PER_RUN} \
             --alsologtostderr
         done
 fi

@@ -64,7 +64,7 @@ def data_augmentation(image):
     return image
 
 def provide_triplet_data(split_name, batch_size, 
-        dataset_dir, class_list, choice_dataset_list):
+        dataset_dir, class_list, choice_dataset_list=None):
     ''' 
     Arrange data into batches that each batch contains multiple class examples
 
@@ -93,7 +93,7 @@ def provide_triplet_data(split_name, batch_size,
                     1000, reshuffle_each_iteration=True)
         datasets.append(single_class_dataset)
 
-    if choice_dataset_list:
+    if choice_dataset_list != None:
         choice_dataset = tf.data.Dataset.from_tensor_slices(
                 np.array(choice_dataset_list, dtype=np.int64))
     else:

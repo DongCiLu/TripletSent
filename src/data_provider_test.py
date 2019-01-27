@@ -22,6 +22,7 @@ import os
 import sys
 import numpy as np
 import pickle
+import random
 from PIL import Image
 import time
 
@@ -34,9 +35,10 @@ import train
 class DataProviderTest(tf.test.TestCase):
     def test_ts_data_reading(self):
         split_name = 'train'
-        batch_size = 8 
+        batch_size = 16 
         dataset_dir = "datasets/google/regular/tfrecord"
         tf.set_random_seed(tf.cast(time.time(), tf.int64))
+        random.seed(time.time())
 
         noun_list, adj_list, sample_cnt_list = train.load_metadata()
         choice_dataset = train.generate_choice_dataset(

@@ -385,8 +385,10 @@ def generate_choice_dataset(noun_list, sample_cnt_list):
         anchor = random.choice(sample_cnt_dict.keys())
         choice_dataset.append(anchor)
         choice_dataset.append(anchor)
-        # TODO: negative should not equal to itself
-        negative = random.choice(noun_dict[anchor].keys())
+        # negative should not equal to itself
+        negative = None
+        while negative == None or negative == anchor:
+            negative = random.choice(noun_dict[anchor].keys())
         choice_dataset.append(negative)
         choice_dataset.append(negative)
         # update tables
@@ -439,12 +441,13 @@ def main(_):
 
         # 2. train the network with triplets
         total_step = 0
-        # 2.1 prepare dataset sequence for each epoch
-        choice_dataset = generate_choice_dataset(noun_list, sample_cnt_list)
-        actual_epoch_size = int(math.ceil(float(len(choice_dataset) / 
-            FLAGS.batch_size)))
-        # 2.2 use the choice dataset to form triplets and train the network
+        random.seed(time.time())
         for epoch in range(FLAGS.num_epochs):
+            # 2.1 prepare dataset sequence for each epoch
+            choice_dataset = generate_choice_dataset(noun_list, sample_cnt_list)
+            actual_epoch_size = int(math.ceil(float(len(choice_dataset) / 
+                FLAGS.batch_size)))
+            # 2.2 use the choice dataset to form triplets and train the network
             classifier.train(input_fn=lambda: input_fn(
                     'train', 'triplet', choice_dataset), 
                     # max_steps=(FLAGS.num_epochs * epoch_size))
