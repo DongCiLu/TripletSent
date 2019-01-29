@@ -62,6 +62,9 @@ flags.DEFINE_string('data_source', 'tfrecord',
 flags.DEFINE_string('mode', 'training', 
         'All modes: [training triplet_training visualization].')
 
+flags.DEFINE_string('loss_mode', 'normal', 
+        'All loss modes: [normal mix].')
+
 flags.DEFINE_string('network', 'resnet', 
         'Which network to use: alexnet or resnet.')
 
@@ -258,6 +261,10 @@ def cnn_model(features, labels, mode):
             "ERROR: Wrong Triplet loss mining method, using softmax"
             loss = tf.losses.softmax_cross_entropy(
                     onehot_labels=onehot_labels, logits=logits)
+        if FLAGS.loss_mode == "mix":
+            loss += tf.losses.softmax_cross_entropy(
+                    onehot_labels=onehot_labels, logits=logits)
+
     else:
         loss = tf.losses.softmax_cross_entropy(
                 onehot_labels=onehot_labels, logits=logits)

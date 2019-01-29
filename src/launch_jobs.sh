@@ -124,9 +124,10 @@ if [[ "$run_mode" == "triplet_training" ]]; then
             --train_log_dir=${TRAIN_DIR} \
             --dataset_dir=${DATASET_DIR} \
             --mode="triplet_training" \
+            --loss_mode="mix" \
             --network="alexnet" \
             --optimizer="Adam" \
-            --batch_size=512 \
+            --batch_size=32 \
             --learning_rate=1e-4 \
             --num_epochs=${EPOCHS_PER_RUN} \
             --alsologtostderr
