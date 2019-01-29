@@ -82,7 +82,7 @@ def provide_triplet_data(split_name, batch_size,
     print(colored("Get split name: {}".format(split_name), 'blue'))
     for class_name in class_list:
         file_pattern = os.path.join(dataset_dir, 
-                ts._FILE_PATTERN % (split_name, class_name))
+                ts._SINGLE_FILE_PATTERN % (split_name, class_name))
         print(colored("Currently using file pattern: {}".format(
             file_pattern), 'red'))
         single_class_dataset = tf.data.TFRecordDataset(file_pattern)

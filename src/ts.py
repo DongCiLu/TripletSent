@@ -42,7 +42,8 @@ if _CONFIGURATION == "GOOGLE_ANP":
     _NUM_CLASSES = 268
     _INPUT_SIZE = 224
 elif _CONFIGURATION == "GOOGLE_TRIPLET_ANP":
-    _FILE_PATTERN = 'single/ts-%s_anp_%s.tfrecord' 
+    _SINGLE_FILE_PATTERN = 'single/ts-%s_anp_%s.tfrecord' 
+    _FILE_PATTERN = 'ts-%s_anp.tfrecord' 
     _SPLITS_TO_SIZES = {'triplet_train': 46726, 'train': 46726, 'test': 19765}
     _IMG_SIZE = 256
     _NUM_CHANNELS = 3
