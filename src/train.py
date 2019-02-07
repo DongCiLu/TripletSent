@@ -362,6 +362,25 @@ def customized_knn_evaluation(predictions, noun_list, adj_list, knn):
     print(colored("Final accuracy after {} experiments is:\n{}".format(
         len(test_predictions), accuracy), 'blue'))
 
+def customized_evaluation(predictions, noun_list, adj_list): 
+    accuracy = {'ANP': 0, 'noun': 0, 'adj': 0}
+    test_predictions = []
+    test_labels = []
+    for pred, _ in zip(predictions, range(ts._SPLITS_TO_SIZES['test'])):
+        test_predictions.append(pred['pred_class'])
+        test_labels.append(pred['gt_class'])
+    for test_prediction, test_label in zip(test_predictions, test_labels):
+        correctness = {'ANP': test_prediction == test_label, 
+                       'noun': test_prediction in noun_list[test_label],
+                       'adj': test_prediction in adj_list[test_label]}
+        for key in correctness:
+            if correctness[key]:
+                accuracy[key] += 1
+    for key in accuracy:
+        accuracy[key] = float(accuracy[key]) / len(test_predictions)
+    print(colored("Final accuracy after {} experiments is:\n{}".format(
+        len(test_predictions), accuracy), 'blue'))
+
 def update_tables(noun_dict, sample_cnt_dict, sample):
     if sample not in sample_cnt_dict:
         return
@@ -432,6 +451,7 @@ def main(_):
             config=run_config)
 
     if FLAGS.mode == 'training':
+        # 1. train and evalutate process
         train_spec = tf.estimator.TrainSpec(input_fn=
                 lambda: input_fn('train'),
                 max_steps=(FLAGS.num_epochs * epoch_size))
@@ -441,6 +461,13 @@ def main(_):
                 throttle_secs=60, start_delay_secs=60)
         tf.estimator.train_and_evaluate(
                 classifier, train_spec, eval_spec)
+
+        # 2. custom training process
+        noun_list, adj_list, sample_cnt_list = load_metadata()
+        testing_embeddings = classifier.predict(
+                input_fn=lambda:input_fn('test', 'custom_evaluate'))
+        customized_evaluation(
+                testing_embeddings, noun_list, adj_list)
 
     elif FLAGS.mode == 'triplet_training':
         # 1. load train and test data
